@@ -174,7 +174,7 @@ Respond in plain text, 2-4 sentences. Be helpful and specific to their profile.`
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-24 right-6 z-50 w-96 max-w-[calc(100vw-3rem)] h-[520px] flex flex-col glass-card shadow-2xl border dark:border-white/10 border-gray-200 overflow-hidden print:hidden"
+            className="fixed bottom-24 right-6 z-50 w-96 max-w-[calc(100vw-3rem)] h-[520px] flex flex-col glass-card dark:bg-[#111111]/98 shadow-2xl border dark:border-white/10 border-gray-200 overflow-hidden print:hidden"
           >
             {/* Header */}
             <div className="flex items-center gap-3 p-4 border-b dark:border-white/10 border-gray-200 bg-gradient-to-r from-primary-500/10 to-transparent">

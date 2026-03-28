@@ -143,7 +143,7 @@ export default function CoachPage() {
                 <p className="text-sm dark:text-gray-300 text-gray-600">{topVerification.medicalContext}</p>
               </div>
             </div>
-            <div className="flex flex-wrap gap-2 flex-shrink-0">
+            <div className="flex flex-wrap gap-2 w-full md:w-auto md:ml-auto md:justify-end mt-2 md:mt-0">
               {verifications.map((v, i) => (
                 <ConfidenceBadge key={i} score={v.confidenceScore} source={v.verifiedSource} status={v.status} />
               ))}
