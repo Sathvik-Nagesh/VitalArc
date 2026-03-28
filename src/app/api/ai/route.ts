@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 
-export const runtime = 'edge';
-
-// Simple in-memory rate limiter per edge isolate
+// Node.js runtime — needed to read non-NEXT_PUBLIC_ env vars
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
 function checkRateLimit(id: string): boolean {
@@ -25,6 +23,8 @@ export async function POST(req: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 
+    console.log('[AI Route] key present:', !!apiKey, 'first 8 chars:', apiKey?.slice(0, 8));
+
     if (!apiKey || apiKey === 'YOUR_KEY_HERE' || apiKey.trim() === '') {
       return NextResponse.json(
         { error: 'Gemini API key not configured.' },
@@ -40,71 +40,70 @@ export async function POST(req: Request) {
     }
 
     if (!checkRateLimit(userId)) {
-      return NextResponse.json({ error: 'Rate limit exceeded. Try again in an hour.' }, { status: 429 });
+      return NextResponse.json({ error: 'Rate limit exceeded.' }, { status: 429 });
     }
 
     const sanitizedPrompt = sanitize(prompt);
 
-    // Use exact model name from AI Studio + X-goog-api-key header (most compatible)
-    // Try gemini-flash-latest first, then 1.5-flash as fallback
-    const models = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
+    // Model list ordered by quota availability
+    // gemini-2.0-flash-lite has highest free-tier quota
+    // gemini-flash-latest is the AI Studio alias
+    const models = [
+      'gemini-2.0-flash-lite',      // Highest free quota, fast
+      'gemini-2.0-flash',           // Standard, may hit quota
+      'gemini-flash-latest',         // AI Studio alias
+      'gemini-2.0-flash-thinking-exp', // Experimental fallback
+    ];
 
     for (const model of models) {
-      const geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-goog-api-key': apiKey,  // Match AI Studio curl format
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+      console.log(`[AI Route] Trying: ${model}`);
+
+      const geminiRes = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey,
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: sanitizedPrompt }] }],
+          generationConfig: {
+            temperature: 0.7,
+            topP: 0.95,
+            maxOutputTokens: 2048,
           },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [{ text: sanitizedPrompt }],
-              },
-            ],
-            generationConfig: {
-              temperature: 0.7,
-              topP: 0.95,
-              maxOutputTokens: 2048,
-            },
-            safetySettings: [
-              { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
-              { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
-            ],
-          }),
-        }
-      );
+          safetySettings: [
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
+          ],
+        }),
+      });
 
       if (geminiRes.ok) {
         const data = await geminiRes.json();
         const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        if (!text) {
-          return NextResponse.json({ error: 'Empty response from Gemini' }, { status: 500 });
-        }
-        console.log(`[Gemini OK] model=${model}`);
+        if (!text) return NextResponse.json({ error: 'Empty response' }, { status: 500 });
+        console.log(`[AI Route] ✅ Success: ${model}`);
         return NextResponse.json({ text, mode, model });
       }
 
       const errText = await geminiRes.text();
-      console.error(`[Gemini ${model}] ${geminiRes.status}:`, errText.slice(0, 300));
+      console.error(`[AI Route] ❌ ${model} → ${geminiRes.status}`);
 
-      // 400 = bad key — stop immediately, no point retrying other models
+      // 400 = bad key, stop trying
       if (geminiRes.status === 400) {
         return NextResponse.json(
-          { error: 'Invalid API key. Go to https://aistudio.google.com/app/apikey and get a fresh key.' },
+          { error: 'Invalid API key. Verify at https://aistudio.google.com/app/apikey' },
           { status: 400 }
         );
       }
-
-      // 429 = quota hit — try next model
-      // 503 = overloaded — try next model
-      // anything else — try next model
+      // 404 = model not available for this key, try next
+      // 429 = quota hit, try next
     }
 
+    // All models failed — return rule-based signal to client
     return NextResponse.json(
-      { error: 'All Gemini models failed. Check API key quota at https://aistudio.google.com/' },
+      { error: 'quota_exhausted', fallback: true },
       { status: 503 }
     );
 

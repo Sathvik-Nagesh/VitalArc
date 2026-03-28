@@ -2,39 +2,49 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 
-// Validate that this request is from Telegram's servers
+// Skip the secret check in dev (localtunnel can't forward custom headers reliably)
 function isValidTelegramRequest(req: Request): boolean {
-  // In production, verify the webhook secret token
+  if (process.env.NODE_ENV === 'development') return true;
   const secretToken = req.headers.get('x-telegram-bot-api-secret-token');
-  return secretToken === process.env.TELEGRAM_WEBHOOK_SECRET || process.env.NODE_ENV === 'development';
+  return secretToken === process.env.TELEGRAM_WEBHOOK_SECRET;
 }
 
 async function sendTelegramMessage(chatId: number, text: string) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  if (!token) return;
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+  if (!token) {
+    console.error('[Telegram] No TELEGRAM_BOT_TOKEN in env!');
+    return;
+  }
+  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
   });
+  if (!res.ok) {
+    console.error('[Telegram sendMessage error]', await res.text());
+  }
+}
+
+
+// GET handler needed to bypass localtunnel's browser confirmation page
+export async function GET() {
+  return NextResponse.json({ ok: true, service: 'VitalArc Telegram Webhook', status: 'active' });
 }
 
 /**
  * TELEGRAM AUTH-SYNC WEBHOOK
  * POST /api/telegram/webhook
- *
- * Auth Flow:
- *   1. User gets sync token from VitalArc web app (Profile page)
- *   2. User texts /sync TOKEN to the Telegram bot
- *   3. Bot finds the Firebase UID for that token, links chatId → uid
- *   4. Bot deletes token (consumed, one-time use)
- *   5. User can now text health updates, they go to THEIR profile only
  */
 export async function POST(req: Request) {
+  // Log incoming request for debugging
+  console.log('[Telegram Webhook] Received POST');
+
   // Validate request origin
   if (!isValidTelegramRequest(req)) {
+    console.warn('[Telegram Webhook] Unauthorized request blocked');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
 
   try {
     const body = await req.json();
