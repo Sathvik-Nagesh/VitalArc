@@ -383,3 +383,41 @@ input[type="range"]::-webkit-slider-thumb:hover {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-15px); }
 }
+
+/* ======== Print Styles for PDF Export ======== */
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+  }
+  .dark {
+    background-color: white !important;
+    color: black !important;
+  }
+  nav, sidebar, aside, button, header, footer, .no-print {
+    display: none !important;
+  }
+  main {
+    background: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .glass, .glass-card {
+    background: white !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    color: black !important;
+    page-break-inside: avoid;
+  }
+  * {
+    color: black !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+  /* Keep exact colors for charts and graphs if they exist */
+  svg, svg * {
+    color: inherit !important;
+  }
+}

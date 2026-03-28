@@ -28,6 +28,7 @@ export default function CollectorPage() {
   const [formData, setFormData] = useState<UserProfile>(getDefaultProfile());
   const [isListening, setIsListening] = useState(false);
   const [voiceText, setVoiceText] = useState('');
+  const [weightUnit, setWeightUnit] = useState<'kg'|'lbs'>('kg');
 
   const update = (field: string, value: unknown) => {
     setFormData(prev => {
@@ -235,7 +236,26 @@ export default function CollectorPage() {
                   </select>
                 </div>
                 <div><label className={labelClass}>Height (cm)</label><input type="number" value={formData.height} onChange={e => update('height', parseInt(e.target.value) || 0)} className={inputClass} /></div>
-                <div><label className={labelClass}>Weight (kg)</label><input type="number" value={formData.weight} onChange={e => update('weight', parseInt(e.target.value) || 0)} className={inputClass} /></div>
+                <div className="flex flex-col">
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label className={labelClass.replace('mb-1.5', 'mb-0')}>Weight</label>
+                    <button 
+                      onClick={() => setWeightUnit(u => u === 'kg' ? 'lbs' : 'kg')} 
+                      className="px-2 py-0.5 rounded text-[10px] font-bold dark:bg-white/10 bg-black/5 hover:bg-primary-500/20 text-primary-500 transition-colors uppercase cursor-pointer"
+                    >
+                      {weightUnit}
+                    </button>
+                  </div>
+                  <input 
+                    type="number" 
+                    value={weightUnit === 'kg' ? formData.weight : Math.round((formData.weight || 0) * 2.20462) || ''} 
+                    onChange={e => {
+                      const val = parseFloat(e.target.value) || 0;
+                      update('weight', weightUnit === 'kg' ? val : Math.round(val / 2.20462));
+                    }} 
+                    className={inputClass} 
+                  />
+                </div>
               </div>
             )}
 

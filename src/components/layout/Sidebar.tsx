@@ -5,10 +5,11 @@ import { usePathname } from 'next/navigation';
 import { useHealthStore } from '@/store/useHealthStore';
 import {
   Home, UserCircle, Heart, Activity, Clock,
-  SlidersHorizontal, Award, Brain, Calendar,
-  Sun, Moon, Shield, Microscope
+  Sun, Moon, Shield, Microscope, LogOut, LogIn, SlidersHorizontal, Brain, Calendar
 } from 'lucide-react';
 import Image from 'next/image';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
@@ -24,7 +25,16 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { theme, toggleTheme, profile } = useHealthStore();
+  const { theme, toggleTheme, profile, user, setProfile } = useHealthStore();
+
+  const handleLogout = async () => {
+     try {
+        await signOut(auth);
+        setProfile(null as any); // Clear local profile on logout to prevent data leak
+     } catch (err) {
+        console.error("Logout failed", err);
+     }
+  };
 
   return (
     <aside className="fixed left-0 top-0 h-full w-[72px] lg:w-[240px] z-50 flex flex-col glass border-r border-white/5 dark:border-white/5 light:border-black/5">
@@ -95,16 +105,37 @@ export default function Sidebar() {
           )}
         </button>
 
-        {/* User info */}
-        {profile && (
-          <Link href="/profile" className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 transition-all">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-lg">
-              {(profile.name || 'U')[0].toUpperCase()}
-            </div>
-            <div className="hidden lg:block">
-              <div className="text-sm font-medium dark:text-gray-200 group-hover:text-primary-400 transition-colors">{profile.name || 'User'}</div>
-              <div className="text-xs text-gray-500">Edit Profile</div>
-            </div>
+        {/* User info & Auth */}
+        {user ? (
+          <>
+            <Link href="/profile" className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 transition-all">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-lg">
+                {(profile?.name || user.email || 'U')[0].toUpperCase()}
+              </div>
+              <div className="hidden lg:block min-w-0">
+                <div className="text-sm font-medium dark:text-gray-200 group-hover:text-primary-400 transition-colors truncate">
+                  {profile?.name || user.email?.split('@')[0]}
+                </div>
+                <div className="text-[10px] text-gray-500 truncate">{user.email}</div>
+              </div>
+            </Link>
+            <button 
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-red-500/10 text-red-500/70 hover:text-red-500 transition-all text-xs"
+            >
+              <LogOut className="w-4 h-4 flex-shrink-0" />
+              <span className="hidden lg:block text-xs font-bold">Sign Out</span>
+            </button>
+          </>
+        ) : (
+          <Link href="/auth" className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-primary-500/10 text-primary-400 transition-all">
+             <div className="w-8 h-8 rounded-full bg-primary-500/20 flex items-center justify-center text-primary-500 flex-shrink-0">
+                <LogIn className="w-4 h-4" />
+             </div>
+             <div className="hidden lg:block">
+                <div className="text-sm font-bold">Sign In</div>
+                <div className="text-[10px] text-gray-500">Save your data securely</div>
+             </div>
           </Link>
         )}
 

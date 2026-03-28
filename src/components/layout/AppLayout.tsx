@@ -1,16 +1,34 @@
 'use client';
 
 import Sidebar from '@/components/layout/Sidebar';
+import CookieConsent from '@/components/layout/CookieConsent';
 import { DISCLAIMER_TEXT } from '@/lib/constants';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import BackgroundPaths from '@/components/layout/BackgroundPaths';
 import { useHealthStore } from '@/store/useHealthStore';
 import { useEffect } from 'react';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { fetchProfileFromCloud } from '@/lib/sync';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { profile, computeAll } = useHealthStore();
+  const { profile, computeAll, setUser, setProfile } = useHealthStore();
+
+  useEffect(() => {
+    // Listen to Firebase Auth state
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setUser(firebaseUser);
+      if (firebaseUser) {
+        const cloudProfile = await fetchProfileFromCloud(firebaseUser.uid);
+        if (cloudProfile) {
+          setProfile(cloudProfile);
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, [setUser, setProfile]);
 
   useEffect(() => {
     // Rehydrate health calculations if a profile exists in storage on first load
@@ -44,6 +62,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           ⚠️ {DISCLAIMER_TEXT}
         </div>
       </main>
+      <CookieConsent />
     </div>
   );
 }

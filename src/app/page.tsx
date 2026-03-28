@@ -8,10 +8,13 @@ import { sampleProfiles } from '@/lib/sampleProfiles';
 import { 
   Activity, ArrowRight, Heart, Brain, Shield, Zap, 
   ChevronDown, Sun, Moon, Sparkles, CheckCircle2, 
-  Search, Lock, Database, Dna, BrainCircuit, Microscope, SlidersHorizontal
+  Search, Lock, Database, Dna, BrainCircuit, Microscope, SlidersHorizontal, LogIn, LogOut
 } from 'lucide-react';
 import Image from 'next/image';
 import BackgroundPaths from '@/components/layout/BackgroundPaths';
+import CookieConsent from '@/components/layout/CookieConsent';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
 
 const fadeIn = {
   initial: { opacity: 0, y: 30 },
@@ -22,7 +25,7 @@ const fadeIn = {
 
 export default function LandingPage() {
   const router = useRouter();
-  const { setProfile, computeAll, theme, toggleTheme, hasCompletedOnboarding } = useHealthStore();
+  const { setProfile, computeAll, theme, toggleTheme, hasCompletedOnboarding, user } = useHealthStore();
   const [showProfiles, setShowProfiles] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -57,8 +60,17 @@ export default function LandingPage() {
           <span className="text-2xl font-black tracking-tighter gradient-text cursor-pointer" onClick={() => router.push('/')}>VitalArc</span>
         </div>
         <div className="flex items-center gap-4">
-           {hasCompletedOnboarding && (
-             <button onClick={() => router.push('/dashboard')} className="text-sm font-bold glass px-4 py-2 rounded-xl hidden sm:block">Dashboard</button>
+           {user ? (
+             <>
+               <button onClick={() => router.push('/dashboard')} className="text-sm font-bold glass px-4 py-2 rounded-xl hidden sm:block hover:bg-white/10 transition-colors">Dashboard</button>
+               <button onClick={() => { signOut(auth); setProfile(null as any); }} title="Sign Out" className="w-10 h-10 rounded-xl glass flex items-center justify-center hover:bg-red-500/20 text-red-400 transition-colors shadow-glow shadow-red-500/10">
+                 <LogOut className="w-4 h-4" />
+               </button>
+             </>
+           ) : (
+             <button onClick={() => router.push('/auth')} className="text-sm font-bold glass px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-white/10 transition-colors">
+               <LogIn className="w-4 h-4" /> Sign In
+             </button>
            )}
            <button
             onClick={toggleTheme}
@@ -121,7 +133,7 @@ export default function LandingPage() {
             ) : (
               <>
                 <button
-                  onClick={() => router.push('/collector')}
+                  onClick={() => router.push(user ? '/collector' : '/auth')}
                   className="btn-primary text-xl px-12 py-5 flex items-center gap-4 group shadow-3xl shadow-primary-500/30 ring-2 ring-white/20"
                 >
                   Start Scanning <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
@@ -314,7 +326,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 py-24 px-4 border-t border-white/5 bg-black/40 text-center">
+      <footer className="relative z-10 py-24 px-4 border-t dark:border-white/5 border-gray-200 dark:bg-black/40 bg-gray-100 text-center">
         <div className="max-w-7xl mx-auto">
            <div className="flex items-center justify-center gap-4 mb-12">
               <div className="relative w-10 h-10">
@@ -334,6 +346,7 @@ export default function LandingPage() {
            </p>
         </div>
       </footer>
+      <CookieConsent />
     </div>
   );
 }

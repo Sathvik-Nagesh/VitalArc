@@ -13,9 +13,12 @@ import { calculateBiologicalAge } from '@/engines/bioAgeEngine';
 import { calculateHealthScore } from '@/engines/healthScoreEngine';
 import { calculateRisks } from '@/engines/riskEngine';
 import { rankHabitImpacts, runSimulation } from '@/engines/simulationEngine';
+import { syncProfileToCloud } from '@/lib/sync';
 
 interface HealthState {
   // User data
+  user: any | null;
+  setUser: (user: any | null) => void;
   profile: UserProfile | null;
   setProfile: (profile: UserProfile) => void;
 
@@ -61,6 +64,7 @@ interface HealthState {
 export const useHealthStore = create<HealthState>()(
   persist(
     (set, get) => ({
+      user: null,
       profile: null,
       bioAge: null,
       healthScore: null,
@@ -77,8 +81,12 @@ export const useHealthStore = create<HealthState>()(
       hasCompletedOnboarding: false,
       isAnalyzing: false,
 
+      setUser: (user) => set({ user }),
+
       setProfile: (profile) => {
         set({ profile });
+        const { user } = get();
+        if (user && profile) syncProfileToCloud(user.uid, profile);
         // Auto-compute after setting profile
         setTimeout(() => get().computeAll(), 0);
       },
