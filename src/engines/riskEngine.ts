@@ -58,7 +58,7 @@ function calculateCardiovascularRisk(profile: UserProfile): RiskPrediction {
     tenYearRisk: Math.round(tenYearRisk * 10) / 10,
     severity,
     confidence: getConfidenceFromData(profile),
-    icon: '❤️',
+    icon: 'HeartPulse',
     color: '#ef4444',
     description: 'Risk of heart attack, stroke, or other cardiovascular events',
   };
@@ -112,7 +112,7 @@ function calculateDiabetesRisk(profile: UserProfile): RiskPrediction {
     tenYearRisk: Math.round(tenYearRisk * 10) / 10,
     severity,
     confidence: getConfidenceFromData(profile),
-    icon: '🩸',
+    icon: 'Activity',
     color: '#f59e0b',
     description: 'Risk of developing insulin resistance and Type 2 diabetes',
   };
@@ -169,7 +169,7 @@ function calculateHypertensionRisk(profile: UserProfile): RiskPrediction {
     tenYearRisk: Math.round(tenYearRisk * 10) / 10,
     severity,
     confidence: getConfidenceFromData(profile),
-    icon: '📊',
+    icon: 'Gauge',
     color: '#f97316',
     description: 'Risk of developing high blood pressure requiring treatment',
   };
@@ -220,7 +220,7 @@ function calculateMentalHealthRisk(profile: UserProfile): RiskPrediction {
     tenYearRisk: Math.round(tenYearRisk * 10) / 10,
     severity,
     confidence: 'medium' as const,
-    icon: '🧠',
+    icon: 'Brain',
     color: '#8b5cf6',
     description: 'Risk of anxiety, depression, or cognitive decline',
   };

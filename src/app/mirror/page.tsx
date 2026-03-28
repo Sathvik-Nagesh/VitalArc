@@ -2,30 +2,30 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
 import { useHealthStore } from '@/store/useHealthStore';
 import AppLayout from '@/components/layout/AppLayout';
 import { Heart, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { renderIcon } from '@/lib/iconMap';
+import BodyModel from '@/components/mirror/BodyModel';
 
-function CountUpAnimation({ target, duration = 2000 }: { target: number; duration?: number }) {
-  const [count, setCount] = useState(0);
+function CountUpAnimation({ target, duration = 2 }: { target: number; duration?: number }) {
+  const count = useMotionValue(0);
+  const rounded = useTransform(count, (latest) => latest.toFixed(1));
+
   useEffect(() => {
-    let start = 0;
-    const increment = target / (duration / 16);
-    const timer = setInterval(() => {
-      start += increment;
-      if (start >= target) { setCount(target); clearInterval(timer); }
-      else setCount(Math.round(start * 10) / 10);
-    }, 16);
-    return () => clearInterval(timer);
-  }, [target, duration]);
-  return <>{count.toFixed(1)}</>;
+    const controls = animate(count, target, { duration, ease: "easeOut" });
+    return controls.stop;
+  }, [target, duration, count]);
+
+  return <motion.span>{rounded}</motion.span>;
 }
 
 export default function MirrorPage() {
   const router = useRouter();
   const { profile, bioAge } = useHealthStore();
   const [revealed, setRevealed] = useState(false);
+  const [hoveredOrgan, setHoveredOrgan] = useState<string | null>(null);
 
   useEffect(() => {
     if (!profile) { router.push('/'); return; }
@@ -92,18 +92,31 @@ export default function MirrorPage() {
           </div>
         </motion.div>
 
-        {/* Organ Ages */}
+        {/* 3D Body Model and Organ Ages Split */}
         {revealed && (
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 2.5 }}>
-            <h2 className="text-xl font-semibold dark:text-white text-gray-800 mb-4">Organ-Level Ages</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {bioAge.organAges.map((organ, i) => {
-                const organDeltaColor = organ.delta > 3 ? 'border-red-500' : organ.delta > 0 ? 'border-orange-500' : organ.delta > -3 ? 'border-cyan-500' : 'border-green-500';
-                return (
-                  <motion.div key={organ.organ} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 2.7 + i * 0.15 }} className={`glass-card p-5 border-l-4 ${organDeltaColor}`}>
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 2.5 }} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="glass-card flex items-center justify-center p-4">
+              <BodyModel selectedOrgan={hoveredOrgan} />
+            </div>
+            
+            <div className="flex flex-col justify-center">
+              <h2 className="text-xl font-semibold dark:text-white text-gray-800 mb-4">Organ-Level Ages</h2>
+              <div className="space-y-4">
+                {bioAge.organAges.map((organ, i) => {
+                  const organDeltaColor = organ.delta > 3 ? 'border-red-500' : organ.delta > 0 ? 'border-orange-500' : organ.delta > -3 ? 'border-cyan-500' : 'border-green-500';
+                  return (
+                    <motion.div 
+                      key={organ.organ} 
+                      onHoverStart={() => setHoveredOrgan(organ.organ)}
+                      onHoverEnd={() => setHoveredOrgan(null)}
+                      initial={{ opacity: 0, x: -20 }} 
+                      animate={{ opacity: 1, x: 0 }} 
+                      transition={{ delay: 2.7 + i * 0.15 }} 
+                      className={`glass-card p-5 border-l-4 cursor-pointer hover:bg-white/5 transition-colors ${organDeltaColor}`}
+                    >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <span className="text-3xl">{organ.icon}</span>
+                        <span style={{ color: organ.color }}>{renderIcon(organ.icon, { className: "w-8 h-8" })}</span>
                         <div>
                           <div className="text-sm dark:text-gray-400 text-gray-500">{organ.label}</div>
                           <div className="text-2xl font-bold dark:text-white text-gray-800">{organ.age.toFixed(1)} <span className="text-sm font-normal dark:text-gray-500 text-gray-400">years</span></div>
@@ -120,6 +133,7 @@ export default function MirrorPage() {
                   </motion.div>
                 );
               })}
+              </div>
             </div>
           </motion.div>
         )}

@@ -11,7 +11,7 @@ import {
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
-  { href: '/collector', label: 'Health Profile', icon: UserCircle },
+  { href: '/collector', label: 'Initial Setup', icon: UserCircle },
   { href: '/mirror', label: 'Bio Age', icon: Heart },
   { href: '/predictor', label: 'Risk Predictor', icon: Activity },
   { href: '/timeline', label: 'Timeline', icon: Clock },
@@ -95,21 +95,21 @@ export default function Sidebar() {
 
         {/* User info */}
         {profile && (
-          <div className="flex items-center gap-3 px-3 py-2 rounded-xl">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+          <Link href="/profile" className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 transition-all">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-lg">
               {(profile.name || 'U')[0].toUpperCase()}
             </div>
             <div className="hidden lg:block">
-              <div className="text-sm font-medium dark:text-gray-200">{profile.name || 'User'}</div>
-              <div className="text-xs text-gray-500">{profile.age} years old</div>
+              <div className="text-sm font-medium dark:text-gray-200 group-hover:text-primary-400 transition-colors">{profile.name || 'User'}</div>
+              <div className="text-xs text-gray-500">Edit Profile</div>
             </div>
-          </div>
+          </Link>
         )}
 
         {/* Award badge */}
         <div className="hidden lg:flex items-center gap-2 px-3 py-2 text-xs text-gray-500">
           <Award className="w-3 h-3" />
-          <span>v1.0 — Hackathon Demo</span>
+          <span>v1.0 — Prototype</span>
         </div>
       </div>
     </aside>

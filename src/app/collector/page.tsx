@@ -9,6 +9,7 @@ import { parseNaturalLanguage, mergeWithDefaults } from '@/lib/nlpParser';
 import { UserProfile } from '@/lib/types';
 import AppLayout from '@/components/layout/AppLayout';
 import { ArrowRight, ArrowLeft, Mic, MicOff, Sparkles, User, Heart as HeartIcon, Dumbbell, Brain, FlaskConical, Users } from 'lucide-react';
+import { renderIcon } from '@/lib/iconMap';
 
 const STEPS = [
   { id: 'demographics', label: 'Demographics', icon: User, color: 'from-blue-500 to-cyan-500' },
@@ -77,7 +78,7 @@ export default function CollectorPage() {
   const canProceed = step < STEPS.length - 1;
   const StepIcon = STEPS[step].icon;
 
-  useEffect(() => { window.scrollTo(0, 0); }, [step]);
+  // Removed auto-scroll to top on step change for better UX
 
   const inputClass = "w-full px-4 py-3 rounded-xl dark:bg-white/5 bg-gray-100 dark:text-white text-gray-800 border dark:border-white/10 border-gray-200 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/30 transition-all";
   const labelClass = "block text-sm font-medium dark:text-gray-300 text-gray-600 mb-1.5";
@@ -92,16 +93,37 @@ export default function CollectorPage() {
         </motion.div>
 
         {/* Voice Input + Sample Profiles */}
-        <div className="flex flex-wrap gap-3 mb-6">
-          <button onClick={handleVoice} className={`btn-secondary flex items-center gap-2 text-sm ${isListening ? 'ring-2 ring-primary-500 animate-pulse' : ''}`} id="voice-input-btn">
-            {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-            {isListening ? 'Listening...' : 'Voice Input'}
-          </button>
+        <div className="flex flex-col gap-4 mb-8">
+          <div className="glass-card p-5 border-l-4 border-primary-500 bg-primary-500/5">
+            <h3 className="text-sm font-bold dark:text-white text-gray-800 mb-2 flex items-center gap-2">
+              <Mic className="w-4 h-4 text-primary-500" /> Autofill with AI Voice
+            </h3>
+            <p className="text-sm dark:text-gray-400 text-gray-600 mb-4 line-clamp-2 leading-relaxed">
+              Don't want to type? Click the button below and speak naturally. For example: "I am a 32 year old male. I weigh 180 lbs, sleep 6 hours a night, and have high blood pressure."
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <button onClick={handleVoice} className={`btn-primary flex items-center gap-2 text-sm px-6 py-2.5 shadow-lg ${isListening ? 'ring-4 ring-primary-500/50 bg-red-500 hover:bg-red-600 border-none' : ''}`} id="voice-input-btn">
+                {isListening ? (
+                  <>
+                    <MicOff className="w-4 h-4" /> Stop Recording...
+                  </>
+                ) : (
+                  <>
+                    <Mic className="w-4 h-4" /> Start Voice Input
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-xs font-medium dark:text-gray-500 text-gray-400 mr-2 uppercase tracking-wider">Or Load Presets:</span>
           {Object.entries(sampleProfiles).map(([key, p]) => (
             <button key={key} onClick={() => loadSample(key)} className="btn-secondary flex items-center gap-2 text-sm">
               <Sparkles className="w-3 h-3" /> Load {p.name}
             </button>
           ))}
+          </div>
         </div>
 
         {voiceText && (
@@ -235,11 +257,11 @@ export default function CollectorPage() {
             {step === 5 && (
               <div className="space-y-3">
                 {[
-                  { key: 'heartDisease', label: 'Heart Disease', icon: '❤️' },
-                  { key: 'diabetes', label: 'Diabetes', icon: '🩸' },
-                  { key: 'hypertension', label: 'Hypertension', icon: '📊' },
-                  { key: 'cancer', label: 'Cancer', icon: '🎗️' },
-                  { key: 'mentalHealth', label: 'Mental Health Conditions', icon: '🧠' },
+                  { key: 'heartDisease', label: 'Heart Disease', icon: 'HeartPulse' },
+                  { key: 'diabetes', label: 'Diabetes', icon: 'Activity' },
+                  { key: 'hypertension', label: 'Hypertension', icon: 'Gauge' },
+                  { key: 'cancer', label: 'Cancer', icon: 'ShieldAlert' },
+                  { key: 'mentalHealth', label: 'Mental Health Conditions', icon: 'Brain' },
                 ].map(item => (
                   <button
                     key={item.key}
@@ -250,7 +272,7 @@ export default function CollectorPage() {
                         : 'dark:bg-white/5 bg-gray-100 hover:bg-white/10'
                     }`}
                   >
-                    <span className="text-xl">{item.icon}</span>
+                    <span className="text-primary-400">{renderIcon(item.icon, { className: "w-6 h-6" })}</span>
                     <span className="text-sm font-medium dark:text-white text-gray-800">{item.label}</span>
                     <div className={`ml-auto w-5 h-5 rounded-md border-2 flex items-center justify-center ${
                       formData.familyHistory[item.key as keyof typeof formData.familyHistory]
@@ -267,19 +289,21 @@ export default function CollectorPage() {
         </AnimatePresence>
 
         {/* Navigation Buttons */}
-        <div className="flex justify-between mt-6">
-          <button onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0} className="btn-secondary flex items-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed">
-            <ArrowLeft className="w-4 h-4" /> Back
-          </button>
-          {canProceed ? (
-            <button onClick={() => setStep(step + 1)} className="btn-primary flex items-center gap-2">
-              Next <ArrowRight className="w-4 h-4" />
+        <div className="sticky bottom-0 lg:static w-full p-4 lg:p-0 z-20 mt-6 -mx-4 lg:mx-0 lg:w-auto bg-[var(--color-surface-dark)]/90 lg:bg-transparent backdrop-blur-md lg:backdrop-blur-none border-t border-white/10 lg:border-none">
+          <div className="flex justify-between max-w-3xl mx-auto px-4 lg:px-0">
+            <button onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0} className="btn-secondary flex items-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed bg-[var(--color-surface-dark)] lg:bg-transparent">
+              <ArrowLeft className="w-4 h-4" /> Back
             </button>
-          ) : (
-            <button onClick={handleSubmit} className="btn-primary flex items-center gap-2 text-lg px-8" id="submit-profile-btn">
-              <Sparkles className="w-5 h-5" /> Analyze My Health
-            </button>
-          )}
+            {canProceed ? (
+              <button onClick={() => setStep(step + 1)} className="btn-primary flex items-center gap-2 shadow-lg shadow-primary-500/20">
+                Next <ArrowRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button onClick={handleSubmit} className="btn-primary flex items-center gap-2 text-base md:text-lg px-6 md:px-8 shadow-lg shadow-primary-500/30" id="submit-profile-btn">
+                <Sparkles className="w-5 h-5" /> Analyze Health
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </AppLayout>

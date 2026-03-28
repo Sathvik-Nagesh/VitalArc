@@ -131,10 +131,10 @@ export function rankHabitImpacts(profile: UserProfile): HabitChange[] {
 
   // Define optimal targets for each habit
   const habitTests: { habit: string; label: string; icon: string; values: Partial<SimulatorValues> }[] = [
-    { habit: 'sleep', label: 'Improve Sleep to 8 hours', icon: '😴', values: { sleepHours: 8 } },
-    { habit: 'exercise', label: 'Exercise 5 days/week', icon: '🏃', values: { exerciseDaysPerWeek: 5 } },
-    { habit: 'diet', label: 'Improve Diet Quality to 8/10', icon: '🥗', values: { dietQuality: 8 } },
-    { habit: 'stress', label: 'Reduce Stress to 3/10', icon: '🧘', values: { stressLevel: 3 } },
+    { habit: 'sleep', label: 'Improve Sleep to 8 hours', icon: 'Moon', values: { sleepHours: 8 } },
+    { habit: 'exercise', label: 'Exercise 5 days/week', icon: 'Dumbbell', values: { exerciseDaysPerWeek: 5 } },
+    { habit: 'diet', label: 'Improve Diet Quality to 8/10', icon: 'Utensils', values: { dietQuality: 8 } },
+    { habit: 'stress', label: 'Reduce Stress to 3/10', icon: 'Smile', values: { stressLevel: 3 } },
   ];
 
   // Add smoking cessation if applicable
@@ -142,7 +142,7 @@ export function rankHabitImpacts(profile: UserProfile): HabitChange[] {
     habitTests.push({
       habit: 'smoking',
       label: 'Quit Smoking',
-      icon: '🚭',
+      icon: 'Ban',
       values: { smokingStatus: 'never' },
     });
   }

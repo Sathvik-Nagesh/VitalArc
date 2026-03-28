@@ -108,22 +108,22 @@ export const TIMELINE_ZONES = {
 export const ORGAN_META = {
   cardiovascular: {
     label: 'Heart & Cardiovascular',
-    icon: '❤️',
+    icon: 'HeartPulse',
     color: '#ef4444',
   },
   brain: {
     label: 'Brain & Cognitive',
-    icon: '🧠',
+    icon: 'BrainCircuit',
     color: '#8b5cf6',
   },
   metabolic: {
     label: 'Metabolic System',
-    icon: '🔥',
+    icon: 'Flame',
     color: '#f59e0b',
   },
   musculoskeletal: {
     label: 'Muscles & Bones',
-    icon: '💪',
+    icon: 'Bone',
     color: '#06b6d4',
   },
 };
@@ -139,4 +139,4 @@ export const FORM_STEPS = [
 ];
 
 // Disclaimer
-export const DISCLAIMER_TEXT = `⚠️ VitalArc is an educational and informational tool designed for hackathon demonstration purposes only. It is NOT a substitute for professional medical advice, diagnosis, or treatment. Never disregard professional medical advice or delay seeking it because of information provided by this application. Always consult with a qualified healthcare provider for any health concerns. The risk predictions and biological age calculations use simplified models and should not be used for actual medical decision-making.`;
+export const DISCLAIMER_TEXT = `VitalArc is an educational and informational tool designed for hackathon demonstration purposes only. It is NOT a substitute for professional medical advice, diagnosis, or treatment. Never disregard professional medical advice or delay seeking it because of information provided by this application. Always consult with a qualified healthcare provider for any health concerns. The risk predictions and biological age calculations use simplified models and should not be used for actual medical decision-making.`;

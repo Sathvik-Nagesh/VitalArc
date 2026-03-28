@@ -7,7 +7,8 @@ import { useHealthStore } from '@/store/useHealthStore';
 import { generateCoachRecommendations } from '@/engines/coachEngine';
 import { rankHabitImpacts } from '@/engines/simulationEngine';
 import AppLayout from '@/components/layout/AppLayout';
-import { Brain, Star, Loader2, Key, BookOpen } from 'lucide-react';
+import { Brain, Star, Loader2, Key, BookOpen, Sparkles } from 'lucide-react';
+import { renderIcon } from '@/lib/iconMap';
 
 export default function CoachPage() {
   const router = useRouter();
@@ -86,7 +87,7 @@ export default function CoachPage() {
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/10 rounded-full blur-3xl" />
               <div className="relative z-10">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="text-2xl">👉</span>
+                  <Sparkles className="w-5 h-5 text-primary-400" />
                   <span className="text-sm font-bold text-primary-400 uppercase tracking-wider">#1 Most Important Change</span>
                 </div>
                 <p className="text-xl font-bold dark:text-white text-gray-800">{coachOutput.mostImportantChange}</p>
@@ -98,8 +99,8 @@ export default function CoachPage() {
               <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.15 }} className={`glass-card p-6 ${rec.isMostImportant ? 'ring-1 ring-primary-500/20' : ''}`}>
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${rec.isMostImportant ? 'bg-gradient-to-br from-yellow-500 to-orange-500' : i === 1 ? 'bg-gradient-to-br from-gray-400 to-gray-500' : 'bg-gradient-to-br from-amber-700 to-amber-800'}`}>
-                      {rec.icon || (i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉')}
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${rec.isMostImportant ? 'bg-gradient-to-br from-yellow-500 to-orange-500 text-white' : i === 1 ? 'bg-gradient-to-br from-gray-400 to-gray-500 text-white' : 'bg-gradient-to-br from-amber-700 to-amber-800 text-white'}`}>
+                      {renderIcon(rec.icon || 'Star', { className: "w-5 h-5" })}
                     </div>
                   </div>
                   <div className="flex-1">

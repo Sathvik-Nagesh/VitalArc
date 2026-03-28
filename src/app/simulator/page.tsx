@@ -8,6 +8,7 @@ import { rankHabitImpacts } from '@/engines/simulationEngine';
 import AppLayout from '@/components/layout/AppLayout';
 import { SlidersHorizontal, ArrowRight, RotateCcw, TrendingDown, TrendingUp, Sparkles } from 'lucide-react';
 import { SimulatorValues } from '@/lib/types';
+import { renderIcon } from '@/lib/iconMap';
 
 export default function SimulatorPage() {
   const router = useRouter();
@@ -171,7 +172,7 @@ export default function SimulatorPage() {
                   const riskDelta = simRisk ? simRisk.tenYearRisk - risk.tenYearRisk : 0;
                   return (
                     <div key={risk.shortName} className="flex items-center gap-3">
-                      <span className="text-lg">{risk.icon}</span>
+                      <span style={{ color: risk.color }}>{renderIcon(risk.icon, { className: "w-5 h-5" })}</span>
                       <span className="text-sm dark:text-gray-300 text-gray-600 w-24">{risk.shortName}</span>
                       <span className="text-sm dark:text-gray-400 text-gray-500 w-16">{risk.tenYearRisk}%</span>
                       <ArrowRight className="w-4 h-4 dark:text-gray-600 text-gray-300" />
@@ -199,7 +200,7 @@ export default function SimulatorPage() {
                   return (
                     <motion.div key={impact.habit} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }} className={`flex items-center gap-3 p-3 rounded-xl ${isTop ? 'bg-primary-500/10 ring-1 ring-primary-500/20' : 'dark:bg-white/3 bg-gray-50'}`}>
                       <span className="text-xl">{i < 3 ? medals[i] : `#${i + 1}`}</span>
-                      <span className="text-lg">{impact.icon}</span>
+                      <span className="text-primary-400">{renderIcon(impact.icon, { className: "w-6 h-6" })}</span>
                       <div className="flex-1">
                         <div className="text-sm font-medium dark:text-white text-gray-800">{impact.label}</div>
                         {isTop && <div className="text-xs text-primary-400 font-medium">👉 THE ONE most impactful change</div>}

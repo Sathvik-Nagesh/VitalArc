@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { useHealthStore } from '@/store/useHealthStore';
 import AppLayout from '@/components/layout/AppLayout';
 import { Activity, Shield, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { renderIcon } from '@/lib/iconMap';
 
 export default function PredictorPage() {
   const router = useRouter();
@@ -33,7 +34,7 @@ export default function PredictorPage() {
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <span className="text-3xl">{risk.icon}</span>
+                    <span className="text-3xl" style={{ color: risk.color }}>{renderIcon(risk.icon, { className: "w-8 h-8" })}</span>
                     <div>
                       <h3 className="font-semibold dark:text-white text-gray-800">{risk.condition}</h3>
                       <p className="text-xs dark:text-gray-400 text-gray-500">{risk.description}</p>

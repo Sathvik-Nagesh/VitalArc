@@ -71,70 +71,94 @@ export default function TimelinePage() {
 
   return (
     <AppLayout>
-      <div className="max-w-6xl mx-auto">
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="text-3xl font-bold dark:text-white text-gray-800 flex items-center gap-2"><Clock className="w-8 h-8 text-cyan-400" /> Health Timeline</h1>
-          <p className="dark:text-gray-400 text-gray-500 mt-1">Your projected health trajectory from now to {new Date().getFullYear() + 15}</p>
-        </motion.div>
-
-        {/* Legend */}
-        <div className="flex items-center gap-4 mt-4 mb-2">
-          <span className="flex items-center gap-1 text-xs"><span className="w-3 h-3 rounded-full bg-green-500" /> Safe Zone</span>
-          <span className="flex items-center gap-1 text-xs"><span className="w-3 h-3 rounded-full bg-yellow-500" /> Warning Zone</span>
-          <span className="flex items-center gap-1 text-xs"><span className="w-3 h-3 rounded-full bg-red-500" /> Danger Zone</span>
-        </div>
-
-        {/* Main Chart */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card p-4 md:p-6 mt-4">
-          <ResponsiveContainer width="100%" height={400}>
-            <AreaChart data={timelineData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="healthGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#00d4aa" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#00d4aa" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="age" label={{ value: 'Age', position: 'insideBottomRight', offset: -5 }} tick={{ fontSize: 12 }} stroke="rgba(255,255,255,0.3)" />
-              <YAxis domain={[0, 100]} label={{ value: 'Health Score', angle: -90, position: 'insideLeft' }} tick={{ fontSize: 12 }} stroke="rgba(255,255,255,0.3)" />
-              <Tooltip content={<CustomTooltip />} />
-              {/* Colored zones */}
-              <ReferenceArea y1={70} y2={100} fill="#10b981" fillOpacity={0.05} />
-              <ReferenceArea y1={40} y2={70} fill="#f59e0b" fillOpacity={0.05} />
-              <ReferenceArea y1={0} y2={40} fill="#ef4444" fillOpacity={0.05} />
-              {warningStart && <ReferenceLine x={warningStart} stroke="#f59e0b" strokeDasharray="5 5" label={{ value: '⚠️ Warning', position: 'top', fontSize: 11 }} />}
-              {dangerStart && <ReferenceLine x={dangerStart} stroke="#ef4444" strokeDasharray="5 5" label={{ value: '🔴 Danger', position: 'top', fontSize: 11 }} />}
-              <Area type="monotone" dataKey="health" stroke="#00d4aa" strokeWidth={3} fill="url(#healthGradient)" dot={(props) => {
-                const { cx, cy, payload } = props;
-                if (payload.hasDanger) return <circle key={cx} cx={cx} cy={cy} r={6} fill="#ef4444" stroke="#ef4444" strokeWidth={2} />;
-                if (payload.hasWarning) return <circle key={cx} cx={cx} cy={cy} r={5} fill="#f59e0b" stroke="#f59e0b" strokeWidth={2} />;
-                return <circle key={cx} cx={cx} cy={cy} r={3} fill="#00d4aa" stroke="#00d4aa" strokeWidth={1} />;
-              }} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </motion.div>
-
-        {/* Events List */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="mt-6">
-          <h2 className="text-xl font-semibold dark:text-white text-gray-800 mb-4 flex items-center gap-2"><Info className="w-5 h-5" /> Key Health Events</h2>
-          <div className="space-y-2">
-            {timelineData.filter(d => d.events.length > 0).map(d => (
-              d.events.map((event, i) => (
-                <div key={`${d.age}-${i}`} className={`glass-card p-4 flex items-center gap-4 border-l-4 ${event.severity === 'danger' ? 'border-red-500' : event.severity === 'warning' ? 'border-yellow-500' : 'border-green-500'}`}>
-                  <div className="text-center min-w-[50px]">
-                    <div className="text-lg font-bold dark:text-white text-gray-800">{d.age}</div>
-                    <div className="text-xs dark:text-gray-500 text-gray-400">{d.year}</div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-sm dark:text-gray-200 text-gray-700">{event.event}</div>
-                    <div className="text-xs dark:text-gray-500 text-gray-400">Probability: {event.probability}%</div>
-                  </div>
-                  {event.severity === 'danger' ? <AlertTriangle className="w-5 h-5 text-red-400" /> : event.severity === 'warning' ? <AlertTriangle className="w-5 h-5 text-yellow-400" /> : <ShieldCheck className="w-5 h-5 text-green-400" />}
-                </div>
-              ))
-            ))}
+      <div className="max-w-4xl mx-auto pb-24">
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-16">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-500 mb-6 shadow-lg shadow-cyan-500/20">
+            <Clock className="w-8 h-8 text-white" />
           </div>
+          <h1 className="text-3xl md:text-5xl font-bold dark:text-white text-gray-800 mb-4">Your Health Journey</h1>
+          <p className="text-lg dark:text-gray-400 text-gray-500">A personalized projection of the next 15 years based on your current habits.</p>
         </motion.div>
+
+        <div className="relative mt-12 px-4 md:px-0">
+          {/* Central Line */}
+          <div 
+            className="absolute left-[40px] md:left-1/2 top-0 bottom-0 w-1 md:-ml-0.5 rounded-full bg-gradient-to-b from-green-500 via-yellow-500 to-red-500 opacity-30" 
+          />
+
+          {timelineData.map((d, i) => {
+            const hasEvents = d.events.length > 0;
+            const isMilestone = i % 5 === 0 || i === 0 || i === timelineData.length - 1;
+            
+            // Only show years that have events, or are milestones (to reduce clutter)
+            if (!hasEvents && !isMilestone) return null;
+
+            const isLeft = i % 2 === 0;
+
+            return (
+              <motion.div 
+                key={d.age}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.5, delay: i * 0.05 }}
+                className={`relative flex items-center justify-between w-full mb-12 md:mb-24 ${isLeft ? 'md:flex-row-reverse' : 'md:flex-row'} flex-row`}
+              >
+                {/* Empty side for layout on Desktop */}
+                <div className="hidden md:block w-5/12" />
+
+                {/* Center Node */}
+                <div className="absolute left-[40px] md:left-1/2 -translate-x-1/2 w-8 h-8 rounded-full border-4 dark:border-[#0a0f18] border-gray-50 flex items-center justify-center z-10"
+                     style={{ backgroundColor: d.hasDanger ? '#ef4444' : d.hasWarning ? '#f59e0b' : '#10b981' }}>
+                   {hasEvents && <div className="w-2 h-2 rounded-full bg-white animate-pulse" />}
+                </div>
+
+                {/* Content Card */}
+                <div className="w-[calc(100%-80px)] md:w-5/12 ml-[80px] md:ml-0">
+                  <div className={`glass-card p-6 relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300 ${d.hasDanger ? 'ring-1 ring-red-500/30' : d.hasWarning ? 'ring-1 ring-yellow-500/30' : ''}`}>
+                    {/* Background glow based on severity */}
+                    <div className={`absolute -inset-4 opacity-0 group-hover:opacity-20 transition-opacity blur-xl ${d.hasDanger ? 'bg-red-500' : d.hasWarning ? 'bg-yellow-500' : 'bg-green-500'}`} />
+                    
+                    <div className="relative z-10">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <div className="text-3xl font-black dark:text-white text-gray-800">Age {d.age}</div>
+                          <div className="text-sm dark:text-gray-400 text-gray-500 font-medium">{d.year}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs uppercase tracking-wider font-bold dark:text-gray-500 text-gray-400 mb-1">Health Score</div>
+                          <div className={`text-2xl font-bold ${d.health > 70 ? 'text-green-400' : d.health > 40 ? 'text-yellow-400' : 'text-red-400'}`}>
+                            {d.health}
+                          </div>
+                        </div>
+                      </div>
+
+                      {hasEvents ? (
+                        <div className="space-y-3 mt-4 pt-4 border-t dark:border-white/10 border-gray-200">
+                          {d.events.map((event, eventIdx) => (
+                            <div key={eventIdx} className="flex gap-3 items-start">
+                              <div className="mt-0.5">
+                                {event.severity === 'danger' ? <AlertTriangle className="w-5 h-5 text-red-500" /> : 
+                                 event.severity === 'warning' ? <AlertTriangle className="w-5 h-5 text-yellow-500" /> : 
+                                 <ShieldCheck className="w-5 h-5 text-green-500" />}
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium dark:text-gray-200 text-gray-800">{event.event}</p>
+                                <p className="text-xs dark:text-gray-400 text-gray-500 mt-0.5">{event.probability}% probability</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm dark:text-gray-500 text-gray-400 italic mt-2">Stable health. Expected signs of typical aging.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
     </AppLayout>
   );

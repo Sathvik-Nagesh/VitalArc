@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useHealthStore } from '@/store/useHealthStore';
 import AppLayout from '@/components/layout/AppLayout';
-import { Calendar, Flame, TrendingUp, Plus } from 'lucide-react';
+import { Calendar, Flame, TrendingUp, Plus, CheckCircle, Moon, Footprints } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { DailyLog } from '@/lib/types';
+import { renderIcon } from '@/lib/iconMap';
 
 export default function TrackerPage() {
   const router = useRouter();
@@ -67,7 +68,7 @@ export default function TrackerPage() {
   });
 
   const streak = calculateStreak();
-  const moods = ['😫', '😔', '😐', '🙂', '😄'];
+  const moods = ['Frown', 'Frown', 'Meh', 'Smile', 'Smile'];
 
   if (!profile) return null;
 
@@ -81,7 +82,7 @@ export default function TrackerPage() {
           </div>
           {streak > 0 && (
             <div className="flex items-center gap-2 glass-card px-4 py-2">
-              <span className="text-2xl flame-animation">🔥</span>
+              <span className="text-2xl flame-animation text-orange-500">{renderIcon('Flame', { className: "w-6 h-6" })}</span>
               <div>
                 <div className="text-2xl font-black dark:text-white text-gray-800">{streak}</div>
                 <div className="text-xs dark:text-gray-400 text-gray-500">day streak</div>
@@ -101,7 +102,7 @@ export default function TrackerPage() {
               {/* Sleep */}
               <div>
                 <div className="flex justify-between mb-1.5">
-                  <label className="text-sm dark:text-gray-300 text-gray-600">😴 Sleep Hours</label>
+                  <label className="text-sm dark:text-gray-300 text-gray-600 flex items-center gap-1">{renderIcon('Moon', { className: "w-4 h-4" })} Sleep Hours</label>
                   <span className="text-sm font-bold text-primary-400">{sleepInput}h</span>
                 </div>
                 <input type="range" min={3} max={12} step={0.5} value={sleepInput} onChange={e => setSleepInput(parseFloat(e.target.value))} className="w-full" />
@@ -110,7 +111,7 @@ export default function TrackerPage() {
               {/* Steps */}
               <div>
                 <div className="flex justify-between mb-1.5">
-                  <label className="text-sm dark:text-gray-300 text-gray-600">🚶 Steps</label>
+                  <label className="text-sm dark:text-gray-300 text-gray-600 flex items-center gap-1"><Footprints className="w-4 h-4" /> Steps</label>
                   <span className="text-sm font-bold text-primary-400">{stepsInput.toLocaleString()}</span>
                 </div>
                 <input type="range" min={0} max={20000} step={500} value={stepsInput} onChange={e => setStepsInput(parseInt(e.target.value))} className="w-full" />
@@ -118,11 +119,11 @@ export default function TrackerPage() {
 
               {/* Mood */}
               <div>
-                <label className="text-sm dark:text-gray-300 text-gray-600 block mb-2">😊 Mood</label>
+                <label className="text-sm dark:text-gray-300 text-gray-600 flex items-center gap-1 mb-2">{renderIcon('Smile', { className: "w-4 h-4" })} Mood</label>
                 <div className="flex gap-2 justify-around">
-                  {moods.map((emoji, i) => (
-                    <button key={i} onClick={() => setMoodInput(i + 1)} className={`text-3xl transition-all ${moodInput === i + 1 ? 'scale-125 grayscale-0' : 'opacity-40 grayscale'}`}>
-                      {emoji}
+                  {moods.map((iconStr, i) => (
+                    <button key={i} onClick={() => setMoodInput(i + 1)} className={`text-3xl transition-all ${moodInput === i + 1 ? 'scale-125 text-primary-400' : 'opacity-40 text-gray-400 hover:opacity-70'}`}>
+                      {renderIcon(iconStr, { className: "w-8 h-8" })}
                     </button>
                   ))}
                 </div>
@@ -171,9 +172,9 @@ export default function TrackerPage() {
                 <div key={log.date} className="glass-card p-3 flex items-center gap-4">
                   <div className="text-sm font-medium dark:text-gray-300 text-gray-600 w-24">{new Date(log.date).toLocaleDateString('en', { month: 'short', day: 'numeric' })}</div>
                   <div className="flex items-center gap-4 text-sm dark:text-gray-400 text-gray-500">
-                    <span>😴 {log.sleepHours}h</span>
-                    <span>🚶 {log.steps.toLocaleString()}</span>
-                    <span>{moods[log.mood - 1]}</span>
+                    <span className="flex items-center gap-1">{renderIcon('Moon', { className: "w-4 h-4" })} {log.sleepHours}h</span>
+                    <span className="flex items-center gap-1"><Footprints className="w-4 h-4" /> {log.steps.toLocaleString()}</span>
+                    <span>{renderIcon(moods[log.mood - 1], { className: "w-4 h-4" })}</span>
                   </div>
                 </div>
               ))}
