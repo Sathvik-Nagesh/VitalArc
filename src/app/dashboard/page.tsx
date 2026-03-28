@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useHealthStore } from '@/store/useHealthStore';
 import AppLayout from '@/components/layout/AppLayout';
-import { Heart, Brain, Flame, Dumbbell, Activity, ArrowRight, TrendingUp, TrendingDown, Zap, Calendar, Clock } from 'lucide-react';
+import { Heart, Brain, Flame, Dumbbell, Activity, ArrowRight, TrendingUp, TrendingDown, Zap, Calendar, Clock, Printer } from 'lucide-react';
 import Link from 'next/link';
 import InteractiveBody, { type OrganData } from '@/components/anatomy/InteractiveBody';
+import HealthRadar from '@/components/charts/HealthRadar';
 
 const ORGAN_SHORT: Record<string, string> = {
   cardiovascular: 'Cardiovascular system shows elevated bio-age due to high BP and low exercise.',
@@ -112,9 +113,14 @@ export default function DashboardPage() {
             </h1>
             <p className="dark:text-gray-400 text-gray-500 mt-1">Your real-time biological health overview</p>
           </div>
-          <Link href="/simulator" className="btn-primary hidden md:flex items-center gap-2 px-6">
-            <Zap className="w-4 h-4" /> Explore Sandbox
-          </Link>
+          <div className="flex gap-3">
+             <button onClick={() => window.print()} className="btn-secondary hidden md:flex items-center gap-2 px-6">
+                <Printer className="w-4 h-4" /> Export Report
+             </button>
+             <Link href="/simulator" className="btn-primary hidden md:flex items-center gap-2 px-6 shadow-glow shadow-primary-500/20">
+                <Zap className="w-4 h-4" /> Explore Sandbox
+             </Link>
+          </div>
         </motion.div>
 
         {/* ── MAIN 3-PANEL LAYOUT ── */}
@@ -205,8 +211,21 @@ export default function DashboardPage() {
             <InteractiveBody organs={organList} onSelect={setSelectedOrgan} selectedId={selectedOrgan?.id ?? null} />
           </motion.div>
 
-          {/* RIGHT: Organ Info or Habit Impacts */}
+          {/* RIGHT: Health Balance Radar or Organ Detail */}
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="space-y-4">
+             {/* Radar Card (Always Shown if no specific organ selected) */}
+             {!selectedOrgan && (
+                <div className="glass-card p-5 relative overflow-hidden bg-gradient-to-br from-primary-500/5 to-transparent">
+                   <div className="text-xs font-bold uppercase tracking-widest dark:text-gray-400 text-gray-500 mb-2">Systemic Balance</div>
+                   <HealthRadar data={[
+                      { label: 'Cardio', value: Math.max(0, 100 - ((bioAge.organAges.find(o => o.organ === 'cardiovascular')?.delta ?? 0) * 8)) },
+                      { label: 'Neuro', value: Math.max(0, 100 - ((bioAge.organAges.find(o => o.organ === 'brain')?.delta ?? 0) * 8)) },
+                      { label: 'Metabolic', value: Math.max(0, 100 - ((bioAge.organAges.find(o => o.organ === 'metabolic')?.delta ?? 0) * 8)) },
+                      { label: 'Muscular', value: Math.max(0, 100 - ((bioAge.organAges.find(o => o.organ === 'musculoskeletal')?.delta ?? 0) * 8)) },
+                   ]} />
+                   <div className="mt-4 text-[10px] text-center dark:text-gray-500 text-gray-400 italic">High symmetry indicates multi-system resilience.</div>
+                </div>
+             )}
 
             <AnimatePresence mode="wait">
               {selectedOrgan ? (

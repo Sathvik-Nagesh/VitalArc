@@ -5,9 +5,19 @@ import { DISCLAIMER_TEXT } from '@/lib/constants';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import BackgroundPaths from '@/components/layout/BackgroundPaths';
+import { useHealthStore } from '@/store/useHealthStore';
+import { useEffect } from 'react';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { profile, computeAll } = useHealthStore();
+
+  useEffect(() => {
+    // Rehydrate health calculations if a profile exists in storage on first load
+    if (profile) {
+      computeAll();
+    }
+  }, [profile, computeAll]);
 
   return (
     <div className="flex min-h-screen bg-grid-pattern overflow-x-hidden relative">
@@ -37,4 +47,3 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-

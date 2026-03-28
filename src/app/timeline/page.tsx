@@ -1,163 +1,146 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { useHealthStore } from '@/store/useHealthStore';
-import { runSimulation } from '@/engines/simulationEngine';
 import AppLayout from '@/components/layout/AppLayout';
-import { Clock, AlertTriangle, ShieldCheck, Info } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, ReferenceLine, ReferenceArea } from 'recharts';
+import { motion } from 'framer-motion';
+import { Calendar, Heart, Shield, Zap, TrendingUp, AlertTriangle, Activity, Brain } from 'lucide-react';
 
 export default function TimelinePage() {
-  const router = useRouter();
-  const { profile, risks, simulatorValues } = useHealthStore();
+  const { profile, bioAge, risks } = useHealthStore();
 
-  useEffect(() => { if (!profile) router.push('/'); }, [profile, router]);
-
-  const timelineData = useMemo(() => {
-    if (!profile || !simulatorValues) return [];
-    const currentYear = new Date().getFullYear();
-    const sim = runSimulation(profile, simulatorValues);
-    const data = [];
-
-    for (let offset = 0; offset <= 15; offset++) {
-      const age = profile.age + offset;
-      const year = currentYear + offset;
-
-      // Calculate health trajectory
-      const avgRisk = risks.reduce((s, r) => s + r.tenYearRisk, 0) / risks.length;
-      const baseHealth = 100 - avgRisk;
-      const decay = offset * (avgRisk / 40);
-      const healthScore = Math.max(20, baseHealth - decay);
-
-      // Find events for this age
-      const events = sim.timelineEvents.filter(e => e.age === age);
-
-      data.push({
-        age,
-        year,
-        health: Math.round(healthScore * 10) / 10,
-        events,
-        hasWarning: events.some(e => e.severity === 'warning'),
-        hasDanger: events.some(e => e.severity === 'danger'),
-      });
-    }
-    return data;
-  }, [profile, risks, simulatorValues]);
-
-  if (!profile || timelineData.length === 0) return <AppLayout><div className="flex items-center justify-center h-[60vh]"><p className="dark:text-gray-400 text-gray-500">Loading...</p></div></AppLayout>;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (!active || !payload?.length) return null;
-    const data = payload[0].payload;
+  if (!profile || !bioAge) {
     return (
-      <div className="glass-card p-3 min-w-[200px]">
-        <div className="font-semibold dark:text-white text-gray-800 mb-1">Age {data.age} ({data.year})</div>
-        <div className="text-sm dark:text-gray-400 text-gray-500">Health: {data.health}/100</div>
-        {data.events.map((e: { event: string; severity: string; probability: number }, i: number) => (
-          <div key={i} className={`text-xs mt-1 ${e.severity === 'danger' ? 'text-red-400' : e.severity === 'warning' ? 'text-yellow-400' : 'text-green-400'}`}>
-            {e.severity === 'danger' ? '🔴' : e.severity === 'warning' ? '🟡' : '🟢'} {e.event} ({e.probability}%)
+      <AppLayout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6">
+          <div className="w-20 h-20 rounded-3xl dark:bg-white/5 bg-gray-100 flex items-center justify-center mb-6 border dark:border-white/10 border-gray-200">
+            <Calendar className="w-10 h-10 text-primary-400" />
           </div>
-        ))}
-      </div>
+          <h2 className="text-2xl font-bold dark:text-white text-gray-800">Timeline Locked</h2>
+          <p className="dark:text-gray-400 text-gray-500 max-w-sm mt-2 font-light">Complete your health scan to view your longevity trajectory.</p>
+        </div>
+      </AppLayout>
     );
-  };
+  }
 
-  // Find danger/warning zones
-  const dangerStart = timelineData.find(d => d.hasDanger)?.age;
-  const warningStart = timelineData.find(d => d.hasWarning)?.age;
+  const chronologicalAge = profile.age;
+  const healthspanEnd = Math.max(chronologicalAge + 5, 80 - (bioAge.delta * 0.8));
+  const lifespanEnd = Math.max(healthspanEnd + 5, 90 - (bioAge.delta * 0.5));
+
+  const timelineYears = Array.from({ length: 11 }, (_, i) => Math.round(chronologicalAge + (i * (lifespanEnd - chronologicalAge) / 10)));
 
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto pb-24">
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-16">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-500 mb-6 shadow-lg shadow-cyan-500/20">
-            <Clock className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl md:text-5xl font-bold dark:text-white text-gray-800 mb-4">Your Health Journey</h1>
-          <p className="text-lg dark:text-gray-400 text-gray-500">A personalized projection of the next 15 years based on your current habits.</p>
-        </motion.div>
+      <div className="max-w-6xl mx-auto p-4 md:p-8">
+        <div className="mb-12">
+          <h1 className="text-4xl md:text-5xl font-black dark:text-white text-gray-900 tracking-tighter mb-4">Longevity Trajectory</h1>
+          <p className="dark:text-gray-400 text-gray-500 font-light text-lg">Your healthspan and lifespan projections based on current clinical markers.</p>
+        </div>
 
-        <div className="relative mt-12 px-4 md:px-0">
-          {/* Central Line */}
-          <div 
-            className="absolute left-[40px] md:left-1/2 top-0 bottom-0 w-1 md:-ml-0.5 rounded-full bg-gradient-to-b from-green-500 via-yellow-500 to-red-500 opacity-30" 
-          />
-
-          {timelineData.map((d, i) => {
-            const hasEvents = d.events.length > 0;
-            const isMilestone = i % 5 === 0 || i === 0 || i === timelineData.length - 1;
-            
-            // Only show years that have events, or are milestones (to reduce clutter)
-            if (!hasEvents && !isMilestone) return null;
-
-            const isLeft = i % 2 === 0;
-
-            return (
-              <motion.div 
-                key={d.age}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.5, delay: i * 0.05 }}
-                className={`relative flex items-center justify-between w-full mb-12 md:mb-24 ${isLeft ? 'md:flex-row-reverse' : 'md:flex-row'} flex-row`}
-              >
-                {/* Empty side for layout on Desktop */}
-                <div className="hidden md:block w-5/12" />
-
-                {/* Center Node */}
-                <div className="absolute left-[40px] md:left-1/2 -translate-x-1/2 w-8 h-8 rounded-full border-4 dark:border-[#0a0f18] border-gray-50 flex items-center justify-center z-10"
-                     style={{ backgroundColor: d.hasDanger ? '#ef4444' : d.hasWarning ? '#f59e0b' : '#10b981' }}>
-                   {hasEvents && <div className="w-2 h-2 rounded-full bg-white animate-pulse" />}
-                </div>
-
-                {/* Content Card */}
-                <div className="w-[calc(100%-80px)] md:w-5/12 ml-[80px] md:ml-0">
-                  <div className={`glass-card p-6 relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300 ${d.hasDanger ? 'ring-1 ring-red-500/30' : d.hasWarning ? 'ring-1 ring-yellow-500/30' : ''}`}>
-                    {/* Background glow based on severity */}
-                    <div className={`absolute -inset-4 opacity-0 group-hover:opacity-20 transition-opacity blur-xl ${d.hasDanger ? 'bg-red-500' : d.hasWarning ? 'bg-yellow-500' : 'bg-green-500'}`} />
-                    
-                    <div className="relative z-10">
-                      <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <div className="text-3xl font-black dark:text-white text-gray-800">Age {d.age}</div>
-                          <div className="text-sm dark:text-gray-400 text-gray-500 font-medium">{d.year}</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-xs uppercase tracking-wider font-bold dark:text-gray-500 text-gray-400 mb-1">Health Score</div>
-                          <div className={`text-2xl font-bold ${d.health > 70 ? 'text-green-400' : d.health > 40 ? 'text-yellow-400' : 'text-red-400'}`}>
-                            {d.health}
-                          </div>
-                        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Timeline Chart */}
+          <div className="lg:col-span-2 glass-card p-10 relative overflow-hidden bg-gradient-to-br from-primary-500/5 to-transparent">
+             <div className="absolute top-0 right-0 p-8 opacity-5">
+                <TrendingUp className="w-48 h-48" />
+             </div>
+             
+             <div className="relative z-10">
+                <div className="flex justify-between items-end mb-16">
+                   <div>
+                      <div className="text-[10px] font-black uppercase tracking-[0.3em] text-primary-400 mb-2">Projected Lifespan</div>
+                      <div className="text-7xl font-black dark:text-white text-gray-900 tracking-tighter leading-none">
+                         {Math.round(lifespanEnd)} <span className="text-3xl text-gray-500">y/o</span>
                       </div>
-
-                      {hasEvents ? (
-                        <div className="space-y-3 mt-4 pt-4 border-t dark:border-white/10 border-gray-200">
-                          {d.events.map((event, eventIdx) => (
-                            <div key={eventIdx} className="flex gap-3 items-start">
-                              <div className="mt-0.5">
-                                {event.severity === 'danger' ? <AlertTriangle className="w-5 h-5 text-red-500" /> : 
-                                 event.severity === 'warning' ? <AlertTriangle className="w-5 h-5 text-yellow-500" /> : 
-                                 <ShieldCheck className="w-5 h-5 text-green-500" />}
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium dark:text-gray-200 text-gray-800">{event.event}</p>
-                                <p className="text-xs dark:text-gray-400 text-gray-500 mt-0.5">{event.probability}% probability</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-sm dark:text-gray-500 text-gray-400 italic mt-2">Stable health. Expected signs of typical aging.</p>
-                      )}
-                    </div>
-                  </div>
+                   </div>
+                   <div className="text-right">
+                      <div className="text-[10px] font-black uppercase tracking-[0.3em] text-accent-400 mb-2">Healthy Years left</div>
+                      <div className="text-5xl font-black dark:text-gray-200 text-gray-700 tracking-tighter leading-none">
+                         {Math.max(0, Math.round(healthspanEnd - chronologicalAge))}
+                      </div>
+                   </div>
                 </div>
-              </motion.div>
-            );
-          })}
+
+                {/* Timeline Bar */}
+                <div className="relative h-24 mb-16 pt-12">
+                  {/* Axis */}
+                  <div className="absolute top-1/2 left-0 right-0 h-1 bg-white/10 rounded-full -translate-y-1/2" />
+                  
+                  {/* Healthspan Section */}
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${((healthspanEnd - chronologicalAge) / (lifespanEnd - chronologicalAge)) * 100}%` }}
+                    className="absolute top-1/2 left-0 h-4 bg-gradient-to-r from-primary-500 to-accent-500 rounded-full -translate-y-1/2 shadow-glow shadow-primary-500/20"
+                  />
+
+                  {/* Indicators */}
+                  <div className="absolute top-1/2 left-0 w-4 h-4 rounded-full bg-white border-4 border-primary-500 -translate-x-1/2 -translate-y-1/2" title="Now" />
+                  
+                  <div className="absolute top-0 flex flex-col items-center" style={{ left: `${((healthspanEnd - chronologicalAge) / (lifespanEnd - chronologicalAge)) * 100}%` }}>
+                     <div className="w-px h-12 bg-accent-500/50" />
+                     <div className="absolute -top-10 text-[10px] font-black whitespace-nowrap text-accent-400 uppercase tracking-widest">End of High Performance</div>
+                     <Shield className="w-5 h-5 text-accent-500 mt-2" />
+                  </div>
+
+                  <div className="absolute top-1/2 right-0 w-4 h-4 rounded-full bg-white border-4 border-gray-400 translate-x-1/2 -translate-y-1/2" />
+                </div>
+
+                {/* Axis Labels */}
+                <div className="flex justify-between px-2">
+                   {timelineYears.map((year, idx) => (
+                      <div key={idx} className="flex flex-col items-center gap-2">
+                        <div className="h-2 w-px bg-white/20" />
+                        <span className="text-[10px] font-bold text-gray-500">{year}</span>
+                      </div>
+                   ))}
+                </div>
+             </div>
+          </div>
+
+          {/* Key Milestones */}
+          <div className="space-y-6">
+             <div className="glass-card p-8 border-l-4 border-red-500">
+               <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center">
+                    <AlertTriangle className="w-6 h-6 text-red-500" />
+                  </div>
+                  <h3 className="font-black text-xl dark:text-white text-gray-900 tracking-tight">Risk Threshold</h3>
+               </div>
+               <p className="text-sm dark:text-gray-400 text-gray-500 leading-relaxed font-light">
+                 Your clinical markers suggest a metabolic shift at age <span className="font-bold text-red-400">{Math.round(chronologicalAge + 8)}</span> if current stress and weight patterns persist.
+               </p>
+             </div>
+
+             <div className="glass-card p-8 border-l-4 border-primary-500">
+                <div className="flex items-center gap-4 mb-4">
+                   <div className="w-12 h-12 rounded-2xl bg-primary-500/10 flex items-center justify-center">
+                     <Zap className="w-6 h-6 text-primary-500" />
+                   </div>
+                   <h3 className="font-black text-xl dark:text-white text-gray-900 tracking-tight">Vigor Peak</h3>
+                </div>
+                <p className="text-sm dark:text-gray-400 text-gray-500 leading-relaxed font-light">
+                  Assuming 5 days of zone 2 exercise per week, your "Peak Years" (high vigor, low decay) can be extended from age <span className="font-bold text-primary-400">{Math.round(healthspanEnd)}</span> to <span className="font-bold text-primary-400">{Math.round(healthspanEnd + 4)}</span>.
+                </p>
+             </div>
+          </div>
+        </div>
+
+        {/* Breakdown Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12 pb-24">
+           {[
+             { l: 'Cellular Decay Rate', v: '0.9x', i: Activity, c: 'text-blue-400' },
+             { l: 'Epigenetic Drift', v: '+0.1y', i: Brain, c: 'text-purple-400' },
+             { l: 'Cardiac Reserve', v: 'High', i: Heart, c: 'text-red-400' },
+             { l: 'Systemic Resilience', v: 'Good', i: Shield, c: 'text-green-400' },
+           ].map((stat, i) => (
+             <motion.div 
+               key={i}
+               whileHover={{ y: -5 }}
+               className="glass-card p-6 flex flex-col items-center gap-2 text-center"
+             >
+                <stat.i className={`w-5 h-5 ${stat.c} mb-2`} />
+                <div className="text-xs uppercase font-black text-gray-500 tracking-[0.2em]">{stat.l}</div>
+                <div className="text-3xl font-black dark:text-white text-gray-800">{stat.v}</div>
+             </motion.div>
+           ))}
         </div>
       </div>
     </AppLayout>

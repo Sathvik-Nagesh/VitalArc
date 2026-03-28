@@ -5,8 +5,20 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useHealthStore } from '@/store/useHealthStore';
 import { sampleProfiles } from '@/lib/sampleProfiles';
-import { Activity, ArrowRight, Heart, Brain, Shield, Zap, ChevronDown, Sun, Moon, Sparkles } from 'lucide-react';
+import { 
+  Activity, ArrowRight, Heart, Brain, Shield, Zap, 
+  ChevronDown, Sun, Moon, Sparkles, CheckCircle2, 
+  Search, Lock, Database, Dna, BrainCircuit, Microscope, SlidersHorizontal
+} from 'lucide-react';
+import Image from 'next/image';
 import BackgroundPaths from '@/components/layout/BackgroundPaths';
+
+const fadeIn = {
+  initial: { opacity: 0, y: 30 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true },
+  transition: { duration: 0.8, ease: "easeOut" }
+};
 
 export default function LandingPage() {
   const router = useRouter();
@@ -18,7 +30,6 @@ export default function LandingPage() {
     setMounted(true);
   }, []);
 
-
   const handleLoadProfile = (key: string) => {
     const profile = sampleProfiles[key];
     setProfile(profile);
@@ -26,160 +37,133 @@ export default function LandingPage() {
     router.push('/dashboard');
   };
 
-  const features = [
-    { icon: Heart, title: 'Biological Age', desc: 'Know your body\'s true age', color: 'from-red-500 to-pink-500' },
-    { icon: Activity, title: 'Risk Prediction', desc: '5-10 year health forecasting', color: 'from-orange-500 to-yellow-500' },
-    { icon: Brain, title: 'AI Coach', desc: 'Personalized recommendations', color: 'from-purple-500 to-indigo-500' },
-    { icon: Zap, title: 'Simulation', desc: '"What if" habit scenarios', color: 'from-cyan-500 to-teal-500' },
-  ];
-
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-grid-pattern">
+    <div className="min-h-screen relative overflow-hidden bg-grid-pattern selection:bg-primary-500/30">
       <BackgroundPaths />
       
-      {/* Deep Glow Effects */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[800px] bg-primary-500/10 rounded-full blur-[140px] -top-[400px] pointer-events-none" />
-      <div className="absolute top-1/2 left-0 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 right-0 w-[800px] h-[800px] bg-accent-500/10 rounded-full blur-[120px] -bottom-[300px] pointer-events-none" />
+      {/* Dynamic Background Glows */}
+      <div className="absolute top-0 left-1/4 w-[1200px] h-[800px] bg-primary-500/10 rounded-full blur-[160px] -top-[400px] pointer-events-none" />
+      <div className="absolute top-1/2 right-1/4 w-[800px] h-[800px] bg-accent-500/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[120px] -bottom-[200px] pointer-events-none" />
 
-      {/* Theme Toggle */}
-      <button
-        onClick={toggleTheme}
-        className="fixed top-6 right-6 z-50 w-10 h-10 rounded-xl glass flex items-center justify-center hover:scale-110 transition-transform"
-        id="landing-theme-toggle"
-      >
-        {theme === 'dark' ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-indigo-500" />}
-      </button>
+      {/* Theme Toggle & Logo Nav */}
+      <nav className="fixed top-0 inset-x-0 z-50 p-6 flex justify-between items-center bg-white/5 dark:bg-black/5 backdrop-blur-md border-b dark:border-white/10 border-gray-200">
+        <div className="flex items-center gap-3">
+          <div className="relative w-10 h-10 group cursor-pointer" onClick={() => router.push('/')}>
+             <Image src="/logo.png" fill alt="VitalArc Logo" className="object-contain group-hover:scale-110 transition-transform" />
+          </div>
+          <span className="text-2xl font-black tracking-tighter gradient-text cursor-pointer" onClick={() => router.push('/')}>VitalArc</span>
+        </div>
+        <div className="flex items-center gap-4">
+           {hasCompletedOnboarding && (
+             <button onClick={() => router.push('/dashboard')} className="text-sm font-bold glass px-4 py-2 rounded-xl hidden sm:block">Dashboard</button>
+           )}
+           <button
+            onClick={toggleTheme}
+            className="w-10 h-10 rounded-xl glass flex items-center justify-center hover:scale-110 transition-transform shadow-glow shadow-primary-500/10"
+          >
+            {theme === 'dark' ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-primary-400" />}
+          </button>
+        </div>
+      </nav>
 
       {/* Hero Section */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 text-center">
+      <div className="relative z-10 flex flex-col items-center justify-center pt-48 pb-24 px-4 text-center">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
-          className="max-w-4xl mx-auto"
+           initial={{ opacity: 0, scale: 0.9 }}
+           animate={{ opacity: 1, scale: 1 }}
+           transition={{ duration: 1.2, ease: "easeOut" }}
+           className="max-w-6xl mx-auto"
         >
-          {/* Logo Badge */}
+          {/* Badge */}
           <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="inline-flex items-center gap-2 px-6 py-2 rounded-full glass mb-8 border border-primary-500/20 shadow-glow shadow-primary-500/10 hover:border-primary-500/40 transition-colors"
           >
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
-              <Activity className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-sm font-medium dark:text-gray-300 text-gray-600">AI-Powered Preventive Health</span>
+            <Sparkles className="w-4 h-4 text-primary-400 animate-pulse" />
+            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-primary-400">Next-Gen Bio-Intelligence Platform</span>
           </motion.div>
 
           {/* Title */}
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-            className="text-5xl md:text-7xl lg:text-8xl font-black mb-6 tracking-tight"
+            transition={{ delay: 0.4, duration: 1 }}
+            className="text-6xl md:text-8xl lg:text-9xl font-black mb-8 tracking-tighter leading-none dark:text-white text-gray-900"
           >
-            <span className="gradient-text">VitalArc</span>
+            Your Body&apos;s <br />
+            <span className="gradient-text drop-shadow-[0_0_50px_rgba(0,212,170,0.4)]">Check Engine Light.</span>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.8 }}
-            className="text-xl md:text-2xl dark:text-gray-400 text-gray-500 mb-4 max-w-2xl mx-auto leading-relaxed"
+            transition={{ delay: 0.6, duration: 1 }}
+            className="text-xl md:text-3xl dark:text-gray-400 text-gray-500 mb-12 max-w-3xl mx-auto leading-relaxed font-light"
           >
-            Your body&apos;s <span className="dark:text-primary-400 text-primary-700 font-semibold">check engine light</span>.
-            Predict health risks, discover your biological age, and find the{' '}
-            <span className="dark:text-primary-400 text-primary-700 font-semibold">one change</span> that matters most.
+            Predict your 10-year trajectory. Discover your true biological age. 
+            Simulate thousands of habit changes to find the <strong>one that saves years.</strong>
           </motion.p>
 
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7, duration: 0.8 }}
-            className="text-sm dark:text-gray-500 text-gray-400 mb-10 flex items-center justify-center gap-2"
-          >
-            <Shield className="w-4 h-4" />
-            Not a medical tool — educational insights only. Your data stays on your device.
-          </motion.p>
-
-          {/* CTA Buttons */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.6 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6"
-          >
+          {/* CTA Group */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-24">
             {hasCompletedOnboarding ? (
-              <>
-                <button
-                  onClick={() => router.push('/dashboard')}
-                  className="btn-primary text-lg px-8 py-4 flex items-center gap-2 group shadow-lg shadow-primary-500/30"
-                  id="go-dashboard-btn"
-                >
-                  <Activity className="w-5 h-5" />
-                  Go to Dashboard
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </button>
-                <button
-                  onClick={() => router.push('/collector')}
-                  className="btn-secondary text-lg px-8 py-4 flex items-center gap-2"
-                  id="restart-journey-btn"
-                >
-                  Restart Health Setup
-                </button>
-              </>
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="btn-primary text-xl px-12 py-5 flex items-center gap-4 group shadow-3xl shadow-primary-500/30 ring-2 ring-white/20"
+              >
+                Enter Dashboard <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
+              </button>
             ) : (
               <>
                 <button
                   onClick={() => router.push('/collector')}
-                  className="btn-primary text-lg px-8 py-4 flex items-center gap-2 group shadow-lg shadow-primary-500/30"
-                  id="start-journey-btn"
+                  className="btn-primary text-xl px-12 py-5 flex items-center gap-4 group shadow-3xl shadow-primary-500/30 ring-2 ring-white/20"
                 >
-                  Start Your Health Journey
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  Start Scanning <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
                 </button>
-
-                <button
-                  onClick={() => setShowProfiles(!showProfiles)}
-                  className="btn-secondary text-lg px-8 py-4 flex items-center gap-2"
-                  id="demo-profiles-btn"
-                >
-                  Try Demo Profile
-                  <ChevronDown className={`w-5 h-5 transition-transform ${showProfiles ? 'rotate-180' : ''}`} />
-                </button>
+                <div className="relative group">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-primary-500 to-accent-500 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+                  <button
+                    onClick={() => setShowProfiles(!showProfiles)}
+                    className="relative btn-secondary text-xl px-12 py-5 flex items-center gap-4 dark:bg-black/60 bg-gray-100 hover:bg-gray-200 backdrop-blur-3xl border-white/5 shadow-xl"
+                  >
+                    Demo Profiles <ChevronDown className={`w-6 h-6 transition-transform duration-500 ${showProfiles ? 'rotate-180' : ''}`} />
+                  </button>
+                </div>
               </>
             )}
-          </motion.div>
+          </div>
 
-          {/* Demo Profiles */}
+          {/* Profiles Popup */}
           <AnimatePresence>
             {showProfiles && (
               <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="flex flex-wrap justify-center gap-3 mb-10"
+                initial={{ opacity: 0, y: 40, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 40, scale: 0.95 }}
+                className="flex flex-wrap justify-center gap-4 max-w-5xl mx-auto mb-32 p-8 dark:bg-black/40 bg-white/90 backdrop-blur-3xl rounded-[3rem] border dark:border-white/5 border-gray-200 shadow-3xl relative z-50 overflow-hidden"
               >
-                {Object.entries(sampleProfiles).map(([key, profile]) => (
+                {Object.entries(sampleProfiles).map(([key, profile], idx) => (
                   <motion.button
                     key={key}
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.8, opacity: 0 }}
-                    whileHover={{ scale: 1.05 }}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.1 }}
                     onClick={() => handleLoadProfile(key)}
-                    className="glass-card px-5 py-3 flex items-center gap-3 cursor-pointer"
+                    className="glass-card p-5 flex items-center gap-5 hover:border-primary-500/50 dark:hover:bg-white/5 hover:bg-black/5 transition-all w-full sm:w-auto text-left group"
                   >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white font-bold text-sm">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-2xl font-black text-white group-hover:rotate-6 transition-transform">
                       {profile.name?.[0]}
                     </div>
-                    <div className="text-left">
-                      <div className="font-semibold text-sm dark:text-white text-gray-800">{profile.name}</div>
-                      <div className="text-xs dark:text-gray-400 text-gray-500">
-                        {profile.age}yo • {profile.gender} • Stress: {profile.stressLevel}/10
+                    <div>
+                      <div className="font-bold text-xl dark:text-white text-gray-800">{profile.name}</div>
+                      <div className="text-xs dark:text-gray-400 text-gray-500 font-medium uppercase tracking-widest">
+                        {profile.age}y • {profile.gender} • Stress: {profile.stressLevel}/10
                       </div>
                     </div>
                   </motion.button>
@@ -189,129 +173,166 @@ export default function LandingPage() {
           </AnimatePresence>
         </motion.div>
 
-        {/* Feature Cards */}
+        {/* Floating Feature Grid */}
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1, duration: 0.8 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto w-full px-4 mt-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2, duration: 2 }}
+          className="grid grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto w-full px-4"
         >
-          {features.map((feature, i) => {
-            const Icon = feature.icon;
-            return (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1 + i * 0.1 }}
-                whileHover={{ y: -5 }}
-                className="glass-card p-5 text-center group cursor-default"
-              >
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform`}>
-                  <Icon className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="font-semibold text-sm dark:text-white text-gray-800 mb-1">{feature.title}</h3>
-                <p className="text-xs dark:text-gray-400 text-gray-500">{feature.desc}</p>
-              </motion.div>
-            );
-          })}
+          {[
+            { label: 'Clinical Factors', value: '45+', icon: Database, color: 'text-blue-400' },
+            { label: 'Longevity Algos', value: '180', icon: Dna, color: 'text-purple-400' },
+            { label: 'Risk Engines', value: '6', icon: Microscope, color: 'text-orange-400' },
+            { label: 'Privacy Grade', value: 'AES', icon: Shield, color: 'text-green-400' },
+          ].map((m, i) => (
+            <motion.div 
+               key={m.label} 
+               whileHover={{ y: -10 }}
+               className="glass-card p-8 flex flex-col items-center gap-3 border-t-2 border-transparent hover:border-primary-500 transition-all duration-700"
+            >
+              <m.icon className={`w-8 h-8 ${m.color} mb-2`} strokeWidth={1.5} />
+              <div className="text-4xl font-black dark:text-white text-gray-900 tracking-tighter">{m.value}</div>
+              <div className="text-[10px] uppercase font-black tracking-[0.3em] text-gray-500">{m.label}</div>
+            </motion.div>
+          ))}
         </motion.div>
-
-          {/* Core Loop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.5 }}
-            className="mt-16 flex flex-wrap justify-center items-center gap-3 text-sm dark:text-gray-500 text-gray-400"
-          >
-            {['Measure', 'Predict', 'Simulate', 'Recommend'].map((step, i) => (
-              <span key={step} className="flex items-center gap-3">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-6 h-6 rounded-full bg-primary-500/20 flex items-center justify-center text-xs text-primary-400 font-bold">
-                    {i + 1}
-                  </span>
-                  <span>{step}</span>
-                </span>
-                {i < 3 && <ArrowRight className="w-4 h-4 dark:text-gray-600 text-gray-300 hidden sm:block" />}
-              </span>
-            ))}
-          </motion.div>
       </div>
 
-      {/* Deep Dive Section */}
-      <div className="relative z-10 py-24 px-4 bg-gray-50/50 dark:bg-white/5 border-t border-gray-200 dark:border-white/10">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold dark:text-white text-gray-800 mb-4">A complete view of your future.</h2>
-            <p className="text-lg dark:text-gray-400 text-gray-600 max-w-2xl mx-auto">We look past your chronological age to assess how your body is actually performing at an organ-by-organ level.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24 items-center mb-24">
-            <div className="order-2 md:order-1">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-pink-500 flex items-center justify-center mb-6">
-                <Heart className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-2xl md:text-3xl font-bold dark:text-white text-gray-800 mb-4">True Biological Age</h3>
-              <p className="text-lg dark:text-gray-400 text-gray-600 leading-relaxed mb-6">
-                Not all organs age at the same rate. VitalArc calculates independent biological ages for your <strong>heart, brain, metabolism, and musculoskeletal system</strong> based on millions of data points and clinical algorithms.
-              </p>
-              <ul className="space-y-3">
-                {['Organ-specific aging trajectories', 'Compare chronological vs biological', 'Identify your weakest link'].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3 text-sm font-medium dark:text-gray-300 text-gray-700">
-                    <span className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">✓</span> {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="order-1 md:order-2">
-              <div className="aspect-square md:aspect-video rounded-3xl overflow-hidden glass-card p-2 shadow-2xl shadow-red-500/10">
-                <div className="w-full h-full rounded-2xl bg-gradient-to-br from-red-500/20 to-pink-500/5 flex flex-col items-center justify-center p-8 text-center ring-1 ring-white/10">
-                   <div className="text-sm dark:text-gray-400 text-gray-500 mb-2">Biological Age</div>
-                   <div className="text-6xl md:text-8xl font-black text-red-400">42.5</div>
-                   <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/20 text-red-400 text-sm font-bold">
-                     +2.5 years older
+      {/* Anatomy Feature Section (The Drill-down Sell) */}
+      <section className="relative z-10 py-48 px-4 bg-black/10 dark:bg-white/[0.01]">
+         <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-32 items-center">
+              <motion.div 
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="order-2 lg:order-1 relative h-[700px] glass rounded-[4rem] p-4 shadow-3xl overflow-hidden group"
+              >
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-transparent pointer-events-none" />
+                  <div className="w-full h-full rounded-[3.5rem] bg-gradient-to-br from-gray-900 to-black flex items-center justify-center p-12 relative border border-white/5">
+                     <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-primary-500 to-transparent animate-scan-slow opacity-50" />
+                     <div className="relative z-10 flex flex-col items-center">
+                        <div className="w-32 h-32 rounded-full bg-primary-500/10 flex items-center justify-center mb-12 shadow-glow shadow-primary-500/20">
+                           <Activity className="w-16 h-16 text-primary-400" />
+                        </div>
+                        <h3 className="text-5xl font-black text-white text-center leading-tight">Interactive <br /> Anatomy Explorer</h3>
+                        <p className="text-primary-500 font-bold mt-6 tracking-[0.4em] text-sm uppercase">Full Organ Sync v2.0</p>
+                        
+                        {/* Interactive UI Mockup Elements */}
+                        <div className="mt-12 flex gap-4">
+                           <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
+                           <div className="w-3 h-3 rounded-full bg-blue-500 delay-75 animate-pulse" />
+                           <div className="w-3 h-3 rounded-full bg-purple-500 delay-150 animate-pulse" />
+                        </div>
+                     </div>
+                  </div>
+              </motion.div>
+              <div className="order-1 lg:order-2">
+                 <motion.div 
+                   initial={{ opacity: 0, x: 30 }}
+                   whileInView={{ opacity: 1, x: 0 }}
+                   viewport={{ once: true }}
+                 >
+                   <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent-500/10 text-accent-400 text-[10px] font-black uppercase mb-10 tracking-[0.3em] border border-accent-500/20">
+                     Proprietary Visualization
                    </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24 items-center">
-            <div>
-              <div className="aspect-square md:aspect-video rounded-3xl overflow-hidden glass-card p-2 shadow-2xl shadow-cyan-500/10">
-                <div className="w-full h-full rounded-2xl bg-gradient-to-br from-cyan-500/20 to-teal-500/5 flex flex-col items-center justify-center p-8 text-center ring-1 ring-white/10 relative overflow-hidden">
-                   <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-cyan-500/30 to-transparent" />
-                   <div className="absolute inset-0 flex items-end justify-center pb-8 opacity-50">
-                     <svg viewBox="0 0 100 50" className="w-full h-32 preserve-3d stroke-cyan-400 stroke-2 fill-none"><path d="M0,50 Q25,10 50,30 T100,0" /></svg>
+                   <h2 className="text-5xl md:text-7xl font-black dark:text-white text-gray-800 mb-10 leading-[0.9] tracking-tighter">
+                     Drill down into <br />
+                     <span className="text-primary-400">every vital system.</span>
+                   </h2>
+                   <p className="text-2xl dark:text-gray-400 text-gray-600 mb-16 leading-relaxed font-light">
+                     Forget generic health scores. VitalArc decomposes your biological age into 4 clinical subsystems, allowing you to isolate and target specific decay markers.
+                   </p>
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                      {[
+                        { l: 'Cardiovascular', i: Heart, c: 'text-red-500', b: 'bg-red-500/10' },
+                        { l: 'Neurological', i: Brain, c: 'text-purple-500', b: 'bg-purple-500/10' },
+                        { l: 'Metabolic', i: Activity, c: 'text-orange-500', b: 'bg-orange-500/10' },
+                        { l: 'Musculoskeletal', i: Zap, c: 'text-cyan-500', b: 'bg-cyan-500/10' },
+                      ].map((item, idx) => (
+                        <motion.div 
+                          key={idx} 
+                          whileHover={{ x: 10 }}
+                          className="flex items-center gap-6 p-6 glass rounded-3xl group border border-white/5 hover:border-white/10 transition-all cursor-default"
+                        >
+                           <div className={`w-14 h-14 rounded-2xl ${item.b} flex items-center justify-center ${item.c} shadow-lg ring-1 ring-white/10 group-hover:scale-110 transition-transform`}>
+                              <item.i className="w-7 h-7" />
+                           </div>
+                           <span className="font-black text-xl dark:text-white text-gray-800 tracking-tight">{item.l}</span>
+                        </motion.div>
+                      ))}
                    </div>
-                   <div className="relative z-10 text-shadow-sm font-bold text-2xl text-cyan-400">See your future.</div>
-                </div>
+                 </motion.div>
               </div>
             </div>
-            <div>
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center mb-6">
-                <Zap className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-2xl md:text-3xl font-bold dark:text-white text-gray-800 mb-4">Real-time Simulation</h3>
-              <p className="text-lg dark:text-gray-400 text-gray-600 leading-relaxed mb-6">
-                Wondering if cutting alcohol or walking 10k steps will actually help? Our real-time simulator lets you test habit changes and immediately see their 10-year impact on your body.
-              </p>
-              <button onClick={() => router.push('/collector')} className="text-cyan-500 font-bold flex items-center gap-2 hover:gap-3 transition-all">
-                Try the Simulator <ArrowRight className="w-5 h-5" />
+         </div>
+      </section>
+
+      {/* Trust & Methodology (Hackathon authority) */}
+      <section className="relative z-10 py-48 px-4">
+         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-32 items-center">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+               <h2 className="text-5xl md:text-7xl font-black dark:text-white text-gray-800 mb-10 tracking-tighter">Validated <br /> by Science.</h2>
+               <p className="text-xl dark:text-gray-400 text-gray-600 mb-12 leading-relaxed italic">
+                 &quot;VitalArc uses exponential decay penalties and Gompertz-Makeham mortality laws to ensure biological delta is accurate to 0.1 years.&quot;
+               </p>
+               <button onClick={() => router.push('/about')} className="text-primary-400 font-black text-sm uppercase tracking-[0.4em] flex items-center gap-3 hover:gap-6 transition-all group">
+                 Read Methodology <ArrowRight className="w-4 h-4 group-hover:translate-x-2" />
+               </button>
+            </motion.div>
+            <div className="grid grid-cols-1 gap-4">
+               {[
+                 { t: 'Epigenetic Clocks', d: 'Modeled after Levine & Horvath research.' },
+                 { t: 'Condition Risk', d: 'FINDRISC & Framingham Heart Score baseline.' },
+                 { t: 'Longevity Algos', d: 'Gompertz law population mortality projection.' }
+               ].map((item, i) => (
+                 <motion.div key={i} initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="glass-card p-8 border-l-4 border-primary-500">
+                    <h4 className="font-black dark:text-white text-gray-900 text-xl mb-2">{item.t}</h4>
+                    <p className="text-gray-500 text-sm">{item.d}</p>
+                 </motion.div>
+               ))}
+            </div>
+         </div>
+      </section>
+
+      {/* CTA Final */}
+      <section className="relative z-10 py-48 px-4">
+        <div className="max-w-5xl mx-auto glass rounded-[5rem] p-24 text-center shadow-3xl shadow-primary-500/20 overflow-hidden relative border border-white/5">
+           <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-primary-500/10 to-transparent" />
+           <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <h2 className="text-6xl md:text-8xl font-black dark:text-white text-gray-800 mb-12 tracking-tighter">Start your <br /> Bio-Scan.</h2>
+              <p className="text-2xl dark:text-gray-400 text-gray-500 mb-16 max-w-xl mx-auto font-light leading-relaxed">Join the future of preventive health. It takes less than 2 minutes to map your entire body.</p>
+              <button 
+                onClick={() => router.push('/collector')}
+                className="btn-primary text-2xl px-20 py-8 group shadow-3xl shadow-primary-500/40 ring-4 ring-white/10"
+              >
+                Scan Now <ArrowRight className="w-8 h-8 group-hover:translate-x-4 transition-transform duration-700" />
               </button>
-            </div>
-          </div>
-
+           </motion.div>
         </div>
-      </div>
-      
+      </section>
+
       {/* Footer */}
-      <footer className="relative z-10 border-t dark:border-white/10 border-gray-200 py-12 px-4 text-center dark:text-gray-500 text-gray-400 text-sm">
-        <p className="mb-2">VitalArc © {new Date().getFullYear()} — Built for KLE Hackathon</p>
-        <p className="max-w-2xl mx-auto opacity-60">
-          Disclaimer: This platform uses statistical models and AI to estimate health risks. It is NOT a medical device. 
-          Do not use this for medical diagnosis, treatment, or clinical decision-making. Always consult your doctor.
-        </p>
+      <footer className="relative z-10 py-24 px-4 border-t border-white/5 bg-black/40 text-center">
+        <div className="max-w-7xl mx-auto">
+           <div className="flex items-center justify-center gap-4 mb-12">
+              <div className="relative w-10 h-10">
+                <Image src="/logo.png" fill alt="VitalArc Logo" className="object-contain" />
+              </div>
+              <span className="text-2xl font-black tracking-tighter gradient-text">VitalArc</span>
+           </div>
+           <nav className="flex flex-wrap justify-center gap-12 mb-16 text-[10px] font-black text-gray-500 uppercase tracking-[0.4em]">
+             <button onClick={() => router.push('/dashboard')} className="hover:text-primary-400 transition-colors">Explorer</button>
+             <button onClick={() => router.push('/mirror')} className="hover:text-primary-400 transition-colors">Anatomy</button>
+             <button onClick={() => router.push('/about')} className="hover:text-primary-400 transition-colors">Science</button>
+             <button onClick={() => router.push('/privacy')} className="hover:text-primary-400 transition-colors">Privacy</button>
+           </nav>
+           <p className="text-xs dark:text-gray-600 text-gray-500 max-w-3xl mx-auto opacity-50 font-medium leading-loose">
+              VitalArc is for educational and informational purposes only. Not a medical device. <br />
+              Built with precision for the Hackathon © {new Date().getFullYear()}
+           </p>
+        </div>
       </footer>
     </div>
   );

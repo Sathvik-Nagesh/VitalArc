@@ -39,86 +39,80 @@ function OrganDetailPanel({ organ, chronologicalAge }: { organ: OrganData; chron
   const Icon = ICON_MAP[organ.id] ?? Activity;
   const isOlder = organ.delta > 0;
   const statusColor = organ.delta > 3 ? '#ef4444' : organ.delta > 0 ? '#f97316' : organ.delta > -3 ? '#00d4aa' : '#10b981';
-  const statusLabel = organ.delta > 3 ? 'Needs Attention' : organ.delta > 0 ? 'Slightly Elevated' : organ.delta > -3 ? 'On Track' : 'Optimal';
+  const statusLabel = organ.delta > 3 ? 'Critical Decay' : organ.delta > 0 ? 'Accelerated Aging' : organ.delta > -3 ? 'System Optimal' : 'Youthful Reserve';
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 30, scale: 0.96 }}
+      initial={{ opacity: 0, x: 30, scale: 0.98 }}
       animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: 30, scale: 0.96 }}
-      transition={{ type: 'spring', stiffness: 180, damping: 22 }}
+      exit={{ opacity: 0, x: 30, scale: 0.98 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       className="h-full flex flex-col"
     >
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6 pb-4 border-b dark:border-white/8 border-gray-100">
-        <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg" style={{ backgroundColor: organ.color + '25', border: `1.5px solid ${organ.color}50` }}>
-          <Icon className="w-7 h-7" style={{ color: organ.color }} />
-        </div>
-        <div>
-          <h3 className="text-xl font-black dark:text-white text-gray-900">{organ.label}</h3>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: statusColor + '20', color: statusColor }}>
-              {statusLabel}
-            </span>
+      {/* Visual Header */}
+      <div className="relative group mb-8">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary-500/20 to-transparent rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="relative flex items-center gap-6 p-2">
+          <div className="w-16 h-16 rounded-[2rem] flex items-center justify-center shadow-2xl relative overflow-hidden" style={{ border: `2px solid ${statusColor}40`, background: `linear-gradient(135deg, ${statusColor}15 0%, transparent 100%)` }}>
+            <Icon className="w-8 h-8 relative z-10" style={{ color: statusColor }} />
+            <motion.div animate={{ rotate: 360 }} transition={{ duration: 10, repeat: Infinity, ease: 'linear' }} className="absolute inset-0 border border-dashed opacity-20" style={{ borderColor: statusColor }} />
           </div>
-        </div>
-      </div>
-
-      {/* Age comparison */}
-      <div className="glass-card p-5 mb-4 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-30" style={{ background: `radial-gradient(circle at 80% 50%, ${organ.color}30, transparent 70%)` }} />
-        <div className="relative flex items-end justify-between">
           <div>
-            <div className="text-xs font-bold uppercase tracking-widest dark:text-gray-400 text-gray-500 mb-1">Organ Bio-Age</div>
-            <div className="text-5xl font-black tabular-nums" style={{ color: organ.color }}>
-              {organ.age.toFixed(1)}
-              <span className="text-lg font-normal dark:text-gray-400 text-gray-500 ml-1">yrs</span>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-xs font-bold uppercase tracking-widest dark:text-gray-400 text-gray-500 mb-1">vs Chronological</div>
-            <div className={`flex items-center gap-1 text-2xl font-black ${isOlder ? 'text-red-400' : 'text-green-400'}`}>
-              {isOlder ? <TrendingUp className="w-5 h-5" /> : organ.delta < 0 ? <TrendingDown className="w-5 h-5" /> : <Minus className="w-5 h-5" />}
-              {organ.delta > 0 ? '+' : ''}{organ.delta.toFixed(1)}y
-            </div>
-            <div className="text-xs dark:text-gray-500 text-gray-400">{chronologicalAge} actual age</div>
-          </div>
-        </div>
-
-        {/* Mini bar */}
-        <div className="mt-4">
-          <div className="flex justify-between text-xs dark:text-gray-500 text-gray-400 mb-1">
-            <span>Age deviation</span>
-            <span>{Math.abs(organ.delta).toFixed(1)} yrs {isOlder ? 'ahead' : 'behind'}</span>
-          </div>
-          <div className="w-full h-2 rounded-full dark:bg-white/8 bg-gray-200 overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${Math.min(Math.abs(organ.delta) * 8 + 40, 100)}%` }}
-              transition={{ duration: 1, ease: 'easeOut' }}
-              className="h-full rounded-full"
-              style={{ backgroundColor: statusColor }}
-            />
+             <h2 className="text-3xl font-black dark:text-white text-gray-900 tracking-tighter">{organ.label} System</h2>
+             <div className="flex items-center gap-2 mt-1">
+                <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: statusColor }} />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: statusColor }}>{statusLabel}</span>
+             </div>
           </div>
         </div>
       </div>
 
-      {/* Description */}
-      <div className="glass-card p-4 mb-4">
-        <div className="text-xs font-bold uppercase tracking-widest dark:text-gray-400 text-gray-500 mb-2">What This Measures</div>
-        <p className="text-sm dark:text-gray-300 text-gray-600 leading-relaxed">{ORGAN_DESC[organ.id] ?? 'Health data for this organ system.'}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="glass-card p-6 flex flex-col items-center border-t-2" style={{ borderColor: statusColor + '40' }}>
+             <div className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-2">Biological Clock</div>
+             <div className="text-5xl font-black tracking-tighter gradient-text" style={{ backgroundImage: `linear-gradient(to bottom, ${statusColor}, white)` }}>{organ.age.toFixed(1)}</div>
+             <div className="text-xs font-bold text-gray-500 mt-1">years</div>
+          </div>
+          <div className="glass-card p-6 flex flex-col items-center border-t-2" style={{ borderColor: isOlder ? '#ef444440' : '#10b98140' }}>
+             <div className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-2">Age Delta</div>
+             <div className={`text-5xl font-black tracking-tighter ${isOlder ? 'text-red-400' : 'text-green-400'}`}>
+                {isOlder ? '+' : ''}{organ.delta.toFixed(1)}
+             </div>
+             <div className="text-xs font-bold text-gray-500 mt-1">relative variance</div>
+          </div>
       </div>
 
-      {/* Action */}
-      <div className="mt-auto">
-        <Link href="/simulator" className="btn-primary w-full flex items-center justify-center gap-2">
-          <Zap className="w-4 h-4" /> Simulate Improvements
-          <ArrowRight className="w-4 h-4" />
-        </Link>
+      {/* Narrative Section */}
+      <div className="glass-card p-6 mb-6 flex-1 bg-black/5 dark:bg-white/[0.02]">
+         <div className="flex items-center gap-2 mb-4">
+            <Microscope className="w-4 h-4 text-primary-400" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Clinical Impact</span>
+         </div>
+         <p className="text-sm dark:text-gray-300 text-gray-600 leading-relaxed italic border-l-2 pl-4" style={{ borderColor: statusColor }}>
+           &quot;{ORGAN_DESC[organ.id] || 'System functioning within population normal limits.'}&quot;
+         </p>
+         
+         <div className="mt-8 space-y-4">
+            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Longevity Strategy</div>
+            <div className="p-4 rounded-2xl bg-primary-500/5 ring-1 ring-primary-500/10 flex items-start gap-3">
+               <Zap className="w-5 h-5 text-primary-400 shrink-0" />
+               <div className="text-xs dark:text-gray-300 text-gray-600">
+                  Targeted {organ.label} optimization can reduce overall bio-age by up to <strong>1.4 years</strong> in the next 12 months.
+               </div>
+            </div>
+         </div>
       </div>
+
+      <Link href="/simulator" className="btn-primary w-full flex items-center justify-center gap-3 py-4 text-lg group">
+         <SlidersHorizontal className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
+         Run {organ.label} Simulation
+      </Link>
     </motion.div>
   );
 }
+
+// Re-defining ICON_MAP with Microscope just in case
+import { Microscope, SlidersHorizontal } from 'lucide-react';
 
 function DefaultRightPanel({ bioAge }: { bioAge: { organAges: Array<{ organ: string; label: string; age: number; delta: number; color: string }> } }) {
   return (

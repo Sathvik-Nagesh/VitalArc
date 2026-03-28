@@ -10,6 +10,7 @@ import { UserProfile } from '@/lib/types';
 import AppLayout from '@/components/layout/AppLayout';
 import { ArrowRight, ArrowLeft, Mic, MicOff, Sparkles, User, Heart as HeartIcon, Dumbbell, Brain, FlaskConical, Users } from 'lucide-react';
 import { renderIcon } from '@/lib/iconMap';
+import AnalysisOverlay from '@/components/analysis/AnalysisOverlay';
 
 const STEPS = [
   { id: 'demographics', label: 'Demographics', icon: User, color: 'from-blue-500 to-cyan-500' },
@@ -22,7 +23,7 @@ const STEPS = [
 
 export default function CollectorPage() {
   const router = useRouter();
-  const { setProfile, setHasCompletedOnboarding } = useHealthStore();
+  const { setProfile, setHasCompletedOnboarding, isAnalyzing, setIsAnalyzing } = useHealthStore();
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState<UserProfile>(getDefaultProfile());
   const [isListening, setIsListening] = useState(false);
@@ -46,17 +47,35 @@ export default function CollectorPage() {
       alert('Speech recognition not supported in this browser. Try Chrome.');
       return;
     }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
     const recognition = new SpeechRecognitionClass();
-    recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.continuous = true;
+    recognition.interimResults = true;
     recognition.lang = 'en-US';
+
+    let finalTranscript = '';
 
     recognition.onstart = () => setIsListening(true);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      setVoiceText(transcript);
-      const parsed = parseNaturalLanguage(transcript);
+      let interimTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        } else {
+          interimTranscript += event.results[i][0].transcript;
+        }
+      }
+      
+      const currentText = finalTranscript + interimTranscript;
+      setVoiceText(currentText);
+      
+      const parsed = parseNaturalLanguage(currentText);
       const merged = mergeWithDefaults(parsed);
       setFormData(merged);
     };
@@ -69,9 +88,13 @@ export default function CollectorPage() {
     setFormData(sampleProfiles[key]);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    setIsAnalyzing(true);
     setProfile(formData);
     setHasCompletedOnboarding(true);
+    // Artificial delay for high-tech effect
+    await new Promise(r => setTimeout(r, 2200));
+    setIsAnalyzing(false);
     router.push('/dashboard');
   };
 
@@ -85,6 +108,7 @@ export default function CollectorPage() {
 
   return (
     <AppLayout>
+      <AnalysisOverlay isVisible={isAnalyzing} />
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
@@ -92,47 +116,78 @@ export default function CollectorPage() {
           <p className="dark:text-gray-400 text-gray-500 mt-1">Tell us about yourself to get personalized health insights</p>
         </motion.div>
 
-        {/* Voice Input + Sample Profiles */}
-        <div className="flex flex-col gap-4 mb-8">
-          <div className="glass-card p-5 border-l-4 border-primary-500 bg-primary-500/5">
-            <h3 className="text-sm font-bold dark:text-white text-gray-800 mb-2 flex items-center gap-2">
-              <Mic className="w-4 h-4 text-primary-500" /> Autofill with AI Voice
-            </h3>
-            <p className="text-sm dark:text-gray-400 text-gray-600 mb-4 line-clamp-2 leading-relaxed">
-              Don't want to type? Click the button below and speak naturally. For example: "I am a 32 year old male. I weigh 180 lbs, sleep 6 hours a night, and have high blood pressure."
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <button onClick={handleVoice} className={`btn-primary flex items-center gap-2 text-sm px-6 py-2.5 shadow-lg ${isListening ? 'ring-4 ring-primary-500/50 bg-red-500 hover:bg-red-600 border-none' : ''}`} id="voice-input-btn">
-                {isListening ? (
-                  <>
-                    <MicOff className="w-4 h-4" /> Stop Recording...
-                  </>
-                ) : (
-                  <>
-                    <Mic className="w-4 h-4" /> Start Voice Input
-                  </>
-                )}
-              </button>
+        {/* Advanced Autofill Tools */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+          {/* Voice Tool */}
+          <div className="glass-card p-5 border-t-4 border-primary-500 bg-primary-500/5 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Mic className="w-16 h-16" />
             </div>
-          </div>
-          
-          <div className="flex flex-wrap gap-2 items-center">
-            <span className="text-xs font-medium dark:text-gray-500 text-gray-400 mr-2 uppercase tracking-wider">Or Load Presets:</span>
-          {Object.entries(sampleProfiles).map(([key, p]) => (
-            <button key={key} onClick={() => loadSample(key)} className="btn-secondary flex items-center gap-2 text-sm">
-              <Sparkles className="w-3 h-3" /> Load {p.name}
+            <h3 className="text-sm font-bold dark:text-white text-gray-800 mb-2 flex items-center gap-2">
+              <Mic className="w-4 h-4 text-primary-500" /> Voice Autofill
+            </h3>
+            <p className="text-xs dark:text-gray-400 text-gray-600 mb-4 leading-relaxed">
+              Speak your vitals and habits. "I'm 45, male, 5'10, 80kg, BP is 130 over 85."
+            </p>
+            <button 
+              onClick={handleVoice} 
+              className={`w-full btn-primary flex items-center justify-center gap-2 text-sm py-2.5 shadow-lg relative overflow-hidden ${isListening ? 'bg-red-500 ring-4 ring-red-500/20' : ''}`}
+            >
+              {isListening && (
+                <motion.div 
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  className="absolute inset-0 flex items-center justify-center gap-0.5"
+                >
+                  {[1, 2, 3, 4, 3, 2, 1].map((h, i) => (
+                    <motion.div 
+                      key={i}
+                      animate={{ height: [8, 20, 8] }}
+                      transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.1 }}
+                      className="w-1 bg-white/40 rounded-full"
+                    />
+                  ))}
+                </motion.div>
+              )}
+              <span className={isListening ? 'opacity-0' : ''}>
+                <Mic className="w-4 h-4 inline mr-2" /> Start Speaking
+              </span>
+              {isListening && <span className="relative z-10 text-white font-bold ml-6">STOP & PARSE</span>}
             </button>
-          ))}
+            {voiceText && (
+              <div className="mt-2 p-2 rounded-lg bg-black/20 text-[10px] italic dark:text-gray-400 text-gray-500 animate-pulse">
+                "{voiceText.slice(-60)}{voiceText.length > 60 ? '...' : ''}"
+              </div>
+            )}
+          </div>
+
+          {/* Paste Tool */}
+          <div className="glass-card p-5 border-t-4 border-accent-500 bg-accent-500/5 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Sparkles className="w-16 h-16" />
+            </div>
+            <h3 className="text-sm font-bold dark:text-white text-gray-800 mb-2 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-accent-500" /> Smart Paste (OCR)
+            </h3>
+            <textarea 
+              className="w-full h-10 px-3 py-2 text-xs dark:bg-black/20 bg-white/40 border border-white/10 rounded-lg focus:h-24 transition-all focus:outline-none resize-none mb-2"
+              placeholder="Paste lab results or a health summary here..."
+              onChange={(e) => {
+                const transcript = e.target.value;
+                if (transcript.length > 10) {
+                  const parsed = parseNaturalLanguage(transcript);
+                  setFormData(prev => ({ 
+                    ...prev, 
+                    ...parsed,
+                    familyHistory: { ...prev.familyHistory, ...parsed.familyHistory }
+                  }));
+                }
+              }}
+            />
+            <p className="text-[10px] dark:text-gray-500 text-gray-400 italic">Form fields will update live as you paste.</p>
           </div>
         </div>
 
-        {voiceText && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card p-3 mb-4 text-sm dark:text-gray-300 text-gray-600">
-            <span className="text-primary-400 font-medium">Heard: </span>&quot;{voiceText}&quot;
-          </motion.div>
-        )}
-
-        {/* Progress Bar */}
+        {/* Global Progress */}
         <div className="flex items-center gap-2 mb-8">
           {STEPS.map((s, i) => {
             const Icon = s.icon;

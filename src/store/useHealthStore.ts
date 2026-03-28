@@ -54,6 +54,8 @@ interface HealthState {
   // UI state
   hasCompletedOnboarding: boolean;
   setHasCompletedOnboarding: (value: boolean) => void;
+  isAnalyzing: boolean;
+  setIsAnalyzing: (value: boolean) => void;
 }
 
 export const useHealthStore = create<HealthState>()(
@@ -73,6 +75,7 @@ export const useHealthStore = create<HealthState>()(
       theme: 'dark',
       geminiApiKey: '',
       hasCompletedOnboarding: false,
+      isAnalyzing: false,
 
       setProfile: (profile) => {
         set({ profile });
@@ -147,6 +150,7 @@ export const useHealthStore = create<HealthState>()(
 
       setGeminiApiKey: (key) => set({ geminiApiKey: key }),
       setHasCompletedOnboarding: (value) => set({ hasCompletedOnboarding: value }),
+      setIsAnalyzing: (value) => set({ isAnalyzing: value }),
     }),
     {
       name: 'vitalarc-storage',

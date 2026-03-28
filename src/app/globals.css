@@ -354,3 +354,32 @@ input[type="range"]::-webkit-slider-thumb:hover {
 .flame-animation {
   animation: flicker 0.5s ease-in-out infinite;
 }
+
+/* ======== Premium Utilities ======== */
+@layer utilities {
+  .animate-scan-slow {
+    animation: scan 8s linear infinite;
+  }
+  .animate-bounce-slow {
+    animation: bounce-y 3s ease-in-out infinite;
+  }
+  .animate-pulse-slow {
+    animation: pulse-glow-bg 4s ease-in-out infinite;
+  }
+}
+
+@keyframes scan {
+  0% { transform: translateY(-100%) }
+  50% { transform: translateY(1000%) }
+  100% { transform: translateY(-100%) }
+}
+
+@keyframes pulse-glow-bg {
+  0%, 100% { opacity: 0.1; transform: scale(1); }
+  50% { opacity: 0.2; transform: scale(1.05); }
+}
+
+@keyframes bounce-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}

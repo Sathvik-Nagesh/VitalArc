@@ -7,7 +7,7 @@ import { useHealthStore } from '@/store/useHealthStore';
 import { generateCoachRecommendations } from '@/engines/coachEngine';
 import { rankHabitImpacts } from '@/engines/simulationEngine';
 import AppLayout from '@/components/layout/AppLayout';
-import { Brain, Star, Loader2, Key, BookOpen, Sparkles } from 'lucide-react';
+import { Brain, Star, Loader2, Key, BookOpen, Sparkles, Volume2, VolumeX } from 'lucide-react';
 import { renderIcon } from '@/lib/iconMap';
 
 export default function CoachPage() {
@@ -16,6 +16,7 @@ export default function CoachPage() {
   const [loading, setLoading] = useState(false);
   const [showApiInput, setShowApiInput] = useState(false);
   const [tempKey, setTempKey] = useState(geminiApiKey);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => { if (!profile) router.push('/'); }, [profile, router]);
 
@@ -30,6 +31,23 @@ export default function CoachPage() {
       console.error('Coach error:', err);
     }
     setLoading(false);
+  };
+
+  const speakRecommendations = () => {
+     if (!coachOutput || typeof window === 'undefined') return;
+     const synth = window.speechSynthesis;
+     if (isSpeaking) {
+        synth.cancel();
+        setIsSpeaking(false);
+        return;
+     }
+
+     const text = `Here is your VitalArc briefing. Your most important priority is: ${coachOutput.mostImportantChange}. ${coachOutput.futureStory}`;
+     const utterance = new SpeechSynthesisUtterance(text);
+     utterance.onstart = () => setIsSpeaking(true);
+     utterance.onend = () => setIsSpeaking(false);
+     utterance.onerror = () => setIsSpeaking(false);
+     synth.speak(utterance);
   };
 
   useEffect(() => {
@@ -49,8 +67,14 @@ export default function CoachPage() {
             <h1 className="text-3xl font-bold dark:text-white text-gray-800 flex items-center gap-2"><Brain className="w-8 h-8 text-purple-400" /> AI Health Coach</h1>
             <p className="dark:text-gray-400 text-gray-500 mt-1">Personalized recommendations based on your health data</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button onClick={() => setShowApiInput(!showApiInput)} className="btn-secondary text-sm flex items-center gap-2"><Key className="w-4 h-4" /> {geminiApiKey ? 'API Set ✓' : 'Set API Key'}</button>
+            {coachOutput && !loading && (
+               <button onClick={speakRecommendations} className={`btn-secondary text-sm flex items-center gap-2 ${isSpeaking ? 'bg-primary-500/20 ring-1 ring-primary-500/50' : ''}`}>
+                 {isSpeaking ? <VolumeX className="w-4 h-4 text-primary-400 animate-pulse" /> : <Volume2 className="w-4 h-4" />}
+                 {isSpeaking ? 'Stop Briefing' : 'Listen to Brief'}
+               </button>
+            )}
             <button onClick={generateRecommendations} disabled={loading} className="btn-primary text-sm flex items-center gap-2 disabled:opacity-50">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Star className="w-4 h-4" />}
               {loading ? 'Analyzing...' : 'Regenerate'}

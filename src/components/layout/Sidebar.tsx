@@ -6,8 +6,9 @@ import { useHealthStore } from '@/store/useHealthStore';
 import {
   Home, UserCircle, Heart, Activity, Clock,
   SlidersHorizontal, Award, Brain, Calendar,
-  Sun, Moon, Shield
+  Sun, Moon, Shield, Microscope
 } from 'lucide-react';
+import Image from 'next/image';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
@@ -18,6 +19,7 @@ const navItems = [
   { href: '/simulator', label: 'Simulator', icon: SlidersHorizontal },
   { href: '/coach', label: 'AI Coach', icon: Brain },
   { href: '/tracker', label: 'Daily Tracker', icon: Calendar },
+  { href: '/about', label: 'Methodology', icon: Microscope },
 ];
 
 export default function Sidebar() {
@@ -27,11 +29,11 @@ export default function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 h-full w-[72px] lg:w-[240px] z-50 flex flex-col glass border-r border-white/5 dark:border-white/5 light:border-black/5">
       {/* Logo */}
-      <Link href="/" className="flex items-center gap-3 px-4 py-5 border-b border-white/5">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center flex-shrink-0">
-          <Activity className="w-5 h-5 text-white" />
+      <Link href="/" className="flex items-center gap-3 px-4 py-5 border-b border-white/5 active:scale-95 transition-transform group">
+        <div className="relative w-10 h-10 flex-shrink-0 group-hover:rotate-6 transition-transform">
+          <Image src="/logo.png" fill alt="Logo" className="object-contain" />
         </div>
-        <span className="hidden lg:block text-lg font-bold gradient-text">VitalArc</span>
+        <span className="hidden lg:block text-lg font-black tracking-tighter gradient-text">VitalArc</span>
       </Link>
 
       {/* Navigation */}
@@ -107,9 +109,9 @@ export default function Sidebar() {
         )}
 
         {/* Award badge */}
-        <div className="hidden lg:flex items-center gap-2 px-3 py-2 text-xs text-gray-500">
-          <Award className="w-3 h-3" />
-          <span>v1.0 — Prototype</span>
+        <div className="hidden lg:flex items-center gap-2 px-3 py-2 text-[10px] text-gray-500 uppercase tracking-widest font-black">
+          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+          <span>v2.2 — Medical Build</span>
         </div>
       </div>
     </aside>

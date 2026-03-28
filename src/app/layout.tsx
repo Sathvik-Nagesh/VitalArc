@@ -4,8 +4,17 @@ import { ThemeInitializer } from "@/components/layout/ThemeInitializer";
 
 export const metadata: Metadata = {
   title: "VitalArc — Your Health's Check Engine Light",
-  description: "AI-powered preventive health platform that predicts health risks, calculates biological age, and recommends actionable lifestyle changes.",
-  keywords: "health, preventive, biological age, risk prediction, AI, wellness",
+  description: "AI-powered preventive health platform that predicts health risks, calculates biological age, and recommends actionable lifestyle changes using medical-grade scoring engines.",
+  keywords: "health, preventive, biological age, risk prediction, AI, wellness, longevity",
+  icons: {
+    icon: "/favicon.png",
+    apple: "/logo.png",
+  },
+  openGraph: {
+    title: "VitalArc",
+    description: "Your health's check engine light.",
+    images: ["/logo.png"],
+  },
 };
 
 export default function RootLayout({
