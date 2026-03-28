@@ -59,9 +59,13 @@ export interface BiologicalAgeResult {
   organAges: OrganAge[];
   factors: {
     name: string;
-    impact: number; // -5 to +5 years
+    impact: number; // years added by this factor being non-optimal
     status: 'good' | 'moderate' | 'poor';
+    score?: number; // 0-1 metric score
+    weight?: number; // factor weight in model
   }[];
+  lifespan?: number; // estimated life expectancy
+  dataConfidence?: 'low' | 'medium' | 'high';
 }
 
 export interface HealthScore {
@@ -116,6 +120,7 @@ export interface HabitChange {
   riskReduction: number;
   rank: number;
   icon: string;
+  condition?: string; // context on why this habit matters for this user
 }
 
 export interface Recommendation {
