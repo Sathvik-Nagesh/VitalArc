@@ -2,83 +2,54 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useHealthStore } from '@/store/useHealthStore';
 import AppLayout from '@/components/layout/AppLayout';
-import { Heart, Brain, Flame, Dumbbell, Activity, AlertTriangle, ArrowRight, TrendingUp, TrendingDown } from 'lucide-react';
+import { Heart, Brain, Flame, Dumbbell, Activity, ArrowRight, TrendingUp, TrendingDown, Zap, Calendar, Clock } from 'lucide-react';
 import Link from 'next/link';
-import { renderIcon } from '@/lib/iconMap';
+import InteractiveBody, { type OrganData } from '@/components/anatomy/InteractiveBody';
 
-function ScoreRing({ score, size = 180 }: { score: number; size?: number }) {
-  const [animatedScore, setAnimatedScore] = useState(0);
-  const radius = (size - 16) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (animatedScore / 100) * circumference;
+const ORGAN_SHORT: Record<string, string> = {
+  cardiovascular: 'Cardiovascular system shows elevated bio-age due to high BP and low exercise.',
+  brain: 'Cognitive markers indicate accelerated aging from sleep deficit and stress load.',
+  metabolic: 'Metabolic organ age driven by diet quality and glucose handling efficiency.',
+  musculoskeletal: 'Muscle and bone aging profile from movement frequency and body composition.',
+  lungs: 'Respiratory capacity estimated from cardiovascular and lifestyle markers.',
+};
 
-  const getColor = (s: number) => {
-    if (s >= 85) return '#10b981';
-    if (s >= 70) return '#22d3ee';
-    if (s >= 55) return '#f59e0b';
-    if (s >= 40) return '#f97316';
-    return '#ef4444';
-  };
-
-  useEffect(() => {
-    const timer = setTimeout(() => setAnimatedScore(score), 300);
-    return () => clearTimeout(timer);
-  }, [score]);
-
+function MetricCard({ label, value, unit, subtitle, color, icon: Icon, href }: {
+  label: string; value: string; unit?: string; subtitle: string;
+  color: string; icon: React.ElementType; href: string;
+}) {
   return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="currentColor" strokeWidth="8" className="text-gray-700/20 dark:text-gray-700/30" />
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={getColor(animatedScore)} strokeWidth="8" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} className="score-ring" style={{ filter: `drop-shadow(0 0 8px ${getColor(animatedScore)}40)` }} />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-4xl font-black dark:text-white text-gray-800">{Math.round(animatedScore)}</span>
-        <span className="text-xs dark:text-gray-400 text-gray-500 font-medium">Health Score</span>
-      </div>
-    </div>
-  );
-}
-
-function OrganAgeCard({ label, icon, age, delta, color }: { label: string; icon: string; age: number; delta: number; color: string }) {
-  return (
-    <motion.div whileHover={{ scale: 1.03 }} className="glass-card p-4 flex items-center gap-3">
-      <div className="flex-shrink-0" style={{ color }}>{renderIcon(icon, { className: "w-6 h-6" })}</div>
-      <div className="flex-1">
-        <div className="text-xs dark:text-gray-400 text-gray-500 mb-0.5">{label}</div>
-        <div className="font-bold text-lg dark:text-white text-gray-800">{age.toFixed(1)} <span className="text-xs font-normal">years</span></div>
-      </div>
-      <div className={`text-sm font-semibold px-2 py-1 rounded-lg ${delta > 0 ? 'bg-red-500/10 text-red-400' : delta < 0 ? 'bg-green-500/10 text-green-400' : 'bg-gray-500/10 text-gray-400'}`} style={{ borderLeft: `3px solid ${color}` }}>
-        {delta > 0 ? '+' : ''}{delta.toFixed(1)}y
-      </div>
-    </motion.div>
-  );
-}
-
-function RiskMiniCard({ condition, risk, severity, icon }: { condition: string; risk: number; severity: string; icon: string }) {
-  const colors: Record<string, string> = { low: 'bg-green-500', moderate: 'bg-yellow-500', high: 'bg-orange-500', 'very-high': 'bg-red-500' };
-  return (
-    <div className="glass-card p-4">
-      <div className="flex items-center gap-2 mb-2">
-        <span className={colors[severity].replace('bg-', 'text-')}>{renderIcon(icon, { className: "w-5 h-5" })}</span>
-        <span className="text-sm font-medium dark:text-gray-300 text-gray-600">{condition}</span>
-      </div>
-      <div className="flex items-end justify-between">
-        <span className="text-2xl font-bold dark:text-white text-gray-800">{risk.toFixed(1)}%</span>
-        <span className={`text-xs px-2 py-0.5 rounded-full text-white ${colors[severity]}`}>{severity}</span>
-      </div>
-      <div className="w-full h-1.5 rounded-full bg-gray-700/30 mt-2 overflow-hidden">
-        <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(risk, 100)}%` }} transition={{ duration: 1, delay: 0.3 }} className={`h-full rounded-full ${colors[severity]}`} />
-      </div>
-    </div>
+    <Link href={href}>
+      <motion.div
+        whileHover={{ y: -4, scale: 1.02 }}
+        className="glass-card p-5 cursor-pointer group relative overflow-hidden"
+      >
+        <div className="absolute -right-4 -top-4 w-20 h-20 rounded-full opacity-8"
+          style={{ background: `radial-gradient(circle, ${color}60, transparent)` }} />
+        <div className="flex items-start justify-between mb-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: color + '20' }}>
+            <Icon className="w-5 h-5" style={{ color }} />
+          </div>
+          <ArrowRight className="w-4 h-4 dark:text-gray-600 text-gray-300 group-hover:translate-x-1 transition-transform" />
+        </div>
+        <div className="text-xs font-bold uppercase tracking-widest dark:text-gray-500 text-gray-400 mb-1">{label}</div>
+        <div className="flex items-end gap-1">
+          <span className="text-3xl font-black dark:text-white text-gray-900 tabular-nums">{value}</span>
+          {unit && <span className="text-sm dark:text-gray-400 text-gray-500 mb-0.5">{unit}</span>}
+        </div>
+        <div className="text-xs dark:text-gray-400 text-gray-500 mt-1 leading-snug">{subtitle}</div>
+      </motion.div>
+    </Link>
   );
 }
 
 export default function DashboardPage() {
   const router = useRouter();
   const { profile, bioAge, healthScore, risks, habitImpacts } = useHealthStore();
+  const [selectedOrgan, setSelectedOrgan] = useState<OrganData | null>(null);
 
   useEffect(() => {
     if (!profile) router.push('/');
@@ -87,15 +58,20 @@ export default function DashboardPage() {
   if (!profile || !bioAge || !healthScore) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-[60vh]">
-          <div className="text-center w-full max-w-sm">
-            <div className="w-16 h-16 rounded-full bg-primary-500/20 flex items-center justify-center mx-auto mb-4 animate-pulse">
-               <Activity className="w-8 h-8 text-primary-500" />
-            </div>
-            <h2 className="text-lg font-semibold dark:text-white text-gray-800">Initializing Health Engine</h2>
-            <p className="dark:text-gray-400 text-gray-500 text-sm mt-1">Calculating your 10-year trajectory...</p>
-            <div className="w-full bg-gray-200 dark:bg-white/10 h-1.5 rounded-full mt-6 overflow-hidden">
-               <motion.div initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: 1.5 }} className="h-full bg-primary-500 rounded-full" />
+        <div className="flex items-center justify-center h-[65vh]">
+          <div className="text-center max-w-xs">
+            <motion.div
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 1.2, repeat: Infinity }}
+              className="w-20 h-20 rounded-full bg-primary-500/15 flex items-center justify-center mx-auto mb-5"
+            >
+              <Activity className="w-9 h-9 text-primary-400" />
+            </motion.div>
+            <h2 className="text-xl font-bold dark:text-white text-gray-800 mb-2">Initializing Health Engine</h2>
+            <p className="dark:text-gray-400 text-gray-500 text-sm mb-5">Processing your 10-year trajectory...</p>
+            <div className="w-full dark:bg-white/8 bg-gray-200 h-1.5 rounded-full overflow-hidden">
+              <motion.div initial={{ width: '0%' }} animate={{ width: '100%' }} transition={{ duration: 2 }}
+                className="h-full bg-gradient-to-r from-primary-500 to-blue-500 rounded-full" />
             </div>
           </div>
         </div>
@@ -104,125 +80,215 @@ export default function DashboardPage() {
   }
 
   const topImpact = habitImpacts[0];
-  const primaryRisk = risks.reduce((max, r) => r.tenYearRisk > max.tenYearRisk ? r : max, risks[0]);
+  const topRisk = risks.reduce((max, r) => r.tenYearRisk > max.tenYearRisk ? r : max, risks[0]);
+  const deltaColor = bioAge.delta > 3 ? '#ef4444' : bioAge.delta > 0 ? '#f97316' : bioAge.delta > -3 ? '#00d4aa' : '#10b981';
+
+  const organList: OrganData[] = [
+    ...bioAge.organAges.map(o => ({
+      id: o.organ, label: o.label, age: o.age, delta: o.delta, color: o.color,
+      description: ORGAN_SHORT[o.organ] ?? '',
+    })),
+    {
+      id: 'lungs', label: 'Lungs',
+      age: bioAge.organAges.find(o => o.organ === 'cardiovascular')?.age ?? bioAge.chronologicalAge,
+      delta: (bioAge.organAges.find(o => o.organ === 'cardiovascular')?.delta ?? 0) * 0.7,
+      color: '#60a5fa', description: ORGAN_SHORT['lungs'],
+    }
+  ];
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
   return (
     <AppLayout>
-      <div className="max-w-5xl mx-auto space-y-6 md:space-y-8 pb-12">
-        {/* Welcome Header */}
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b dark:border-white/5 border-gray-200 pb-6">
+      <div className="max-w-7xl mx-auto space-y-6 pb-10">
+
+        {/* ── HEADER ── */}
+        <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="flex items-end justify-between border-b dark:border-white/6 border-gray-100 pb-5">
           <div>
-            <h1 className="text-3xl md:text-4xl font-black dark:text-white text-gray-800 tracking-tight">
-              Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, <span className="gradient-text">{profile.name?.split(' ')[0] || 'User'}</span>.
+            <p className="text-sm font-bold uppercase tracking-widest text-primary-400 mb-1">{greeting}</p>
+            <h1 className="text-3xl md:text-4xl font-black dark:text-white text-gray-900 tracking-tight">
+              {profile.name?.split(' ')[0] ?? 'User'}&apos;s Health Dashboard
             </h1>
-            <p className="dark:text-gray-400 text-gray-500 mt-2 text-lg">Your health baseline is calculated and active.</p>
+            <p className="dark:text-gray-400 text-gray-500 mt-1">Your real-time biological health overview</p>
           </div>
-          <Link href="/simulator" className="btn-primary flex items-center gap-2 px-6 shadow-lg shadow-primary-500/20">
-             Explore Sandbox <ArrowRight className="w-4 h-4" />
+          <Link href="/simulator" className="btn-primary hidden md:flex items-center gap-2 px-6">
+            <Zap className="w-4 h-4" /> Explore Sandbox
           </Link>
         </motion.div>
 
-        {/* Primary Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-8 flex flex-col justify-between group hover:border-primary-500/50 transition-colors">
-            <div className="flex justify-between items-start mb-6">
-               <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 flex items-center justify-center">
-                 <Heart className="w-6 h-6 text-cyan-400" />
-               </div>
-               <span className="text-xs uppercase tracking-wider font-bold dark:text-gray-500 text-gray-400">Biological Age</span>
+        {/* ── MAIN 3-PANEL LAYOUT ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px_1fr] gap-6 items-start">
+
+          {/* LEFT: Metric Cards */}
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <MetricCard
+                label="Bio Age" value={bioAge.biologicalAge.toFixed(1)} unit="yrs"
+                subtitle={`${bioAge.delta > 0 ? '+' : ''}${bioAge.delta.toFixed(1)}y vs your actual age`}
+                color={deltaColor} icon={Heart} href="/mirror"
+              />
+              <MetricCard
+                label="Health Score" value={Math.round(healthScore.overall).toString()} unit="/100"
+                subtitle={`Grade: ${healthScore.grade} — ${healthScore.overall >= 70 ? 'Good standing' : 'Needs work'}`}
+                color="#10b981" icon={Activity} href="/predictor"
+              />
             </div>
-            <div>
-              <div className="flex items-end gap-3 mb-1">
-                <span className="text-5xl font-black dark:text-white text-gray-800">{bioAge.biologicalAge.toFixed(1)}</span>
-                <span className="text-lg dark:text-gray-400 text-gray-500 pb-1">yo</span>
+
+            {/* Top Risk Banner */}
+            <motion.div whileHover={{ y: -2 }} className="glass-card p-5 relative overflow-hidden border-l-4 border-orange-500/60">
+              <div className="absolute right-0 top-0 bottom-0 w-24 opacity-5"
+                style={{ background: 'linear-gradient(to left, #f97316, transparent)' }} />
+              <div className="text-xs font-bold uppercase tracking-widest dark:text-gray-400 text-gray-500 mb-2">Highest Risk Detected</div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-lg font-black dark:text-white text-gray-900">{topRisk.condition}</div>
+                  <div className="text-sm text-orange-400 font-bold">{topRisk.tenYearRisk.toFixed(1)}% 10-year risk</div>
+                </div>
+                <Link href="/predictor" className="btn-secondary text-sm px-4 py-2 flex items-center gap-1">
+                  View All <ArrowRight className="w-3 h-3" />
+                </Link>
               </div>
-              <p className="text-sm dark:text-gray-400 text-gray-500 flex items-center gap-2 mt-3">
-                 <span className={`px-2 py-0.5 rounded-md font-medium text-xs ${bioAge.delta > 0 ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500'}`}>
-                    {bioAge.delta > 0 ? '+' : ''}{bioAge.delta.toFixed(1)} yrs
-                 </span>
-                 vs chronological
-              </p>
+              <div className="mt-3 w-full h-2 rounded-full dark:bg-white/8 bg-gray-200 overflow-hidden">
+                <motion.div initial={{ width: 0 }}
+                  animate={{ width: `${Math.min(topRisk.tenYearRisk, 100)}%` }}
+                  transition={{ duration: 1.2, delay: 0.4 }}
+                  className="h-full rounded-full bg-gradient-to-r from-orange-500 to-red-500"
+                />
+              </div>
+            </motion.div>
+
+            {/* Top Habit Impact */}
+            {topImpact && (
+              <motion.div whileHover={{ y: -2 }} className="glass-card p-5 border-l-4 border-primary-500/60">
+                <div className="text-xs font-bold uppercase tracking-widest dark:text-gray-400 text-gray-500 mb-2">
+                  #1 Most Impactful Action
+                </div>
+                <div className="text-lg font-black dark:text-white text-gray-900 mb-1">{topImpact.label}</div>
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="text-green-400 font-bold">-{topImpact.bioAgeImpact}y bio-age</span>
+                  <span className="dark:text-gray-600 text-gray-300">·</span>
+                  <span className="text-cyan-400 font-bold">+{topImpact.scoreImpact} score</span>
+                  <span className="dark:text-gray-600 text-gray-300">·</span>
+                  <span className="text-blue-400 font-bold">-{topImpact.riskReduction}% risk</span>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Quick Links */}
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { href: '/timeline', icon: Clock, label: 'Timeline', desc: '15-yr prognosis', color: '#3b82f6' },
+                { href: '/tracker', icon: Calendar, label: 'Daily Log', desc: 'Track today', color: '#a855f7' },
+              ].map(l => (
+                <Link key={l.href} href={l.href}>
+                  <motion.div whileHover={{ y: -3 }} className="glass-card p-4 cursor-pointer">
+                    <l.icon className="w-5 h-5 mb-2" style={{ color: l.color }} />
+                    <div className="text-sm font-bold dark:text-white text-gray-800">{l.label}</div>
+                    <div className="text-xs dark:text-gray-400 text-gray-500">{l.desc}</div>
+                  </motion.div>
+                </Link>
+              ))}
             </div>
-            <Link href="/mirror" className="mt-6 text-sm text-cyan-500 font-medium flex items-center gap-1 group-hover:gap-2 transition-all">Detailed Analysis <ArrowRight className="w-4 h-4" /></Link>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card p-8 flex flex-col justify-between group hover:border-primary-500/50 transition-colors">
-            <div className="flex justify-between items-start mb-6">
-               <div className="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center">
-                 <Activity className="w-6 h-6 text-green-400" />
-               </div>
-               <span className="text-xs uppercase tracking-wider font-bold dark:text-gray-500 text-gray-400">Health Score</span>
-            </div>
-            <div>
-              <div className="flex items-end gap-3 mb-1">
-                <span className="text-5xl font-black dark:text-white text-gray-800">{Math.round(healthScore.overall)}</span>
-                <span className="text-lg dark:text-gray-400 text-gray-500 pb-1">/ 100</span>
-              </div>
-              <div className="w-full bg-gray-200 dark:bg-white/10 h-2 rounded-full mt-4 overflow-hidden">
-                 <div className="h-full bg-gradient-to-r from-red-500 via-yellow-500 to-green-500" style={{ width: `${healthScore.overall}%` }} />
-              </div>
-            </div>
-            <div className="mt-6 text-sm dark:text-gray-400 text-gray-500 flex justify-between items-center">
-               <span>Grade Rating</span>
-               <span className="font-bold dark:text-white text-gray-800 text-xl">{healthScore.grade}</span>
-            </div>
+          {/* CENTER: Anatomy */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+            className="glass-card p-4 md:p-6"
+            style={{
+              borderColor: selectedOrgan ? selectedOrgan.color + '40' : undefined,
+              boxShadow: selectedOrgan ? `0 0 50px ${selectedOrgan.color}12` : undefined,
+              transition: 'border-color 0.4s, box-shadow 0.4s',
+            }}
+          >
+            <InteractiveBody organs={organList} onSelect={setSelectedOrgan} selectedId={selectedOrgan?.id ?? null} />
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="glass-card p-8 flex flex-col justify-between group hover:border-primary-500/50 transition-colors">
-            <div className="flex justify-between items-start mb-6">
-               <div className="w-12 h-12 rounded-2xl bg-orange-500/10 flex items-center justify-center">
-                 <Flame className="w-6 h-6 text-orange-400" />
-               </div>
-               <span className="text-xs uppercase tracking-wider font-bold dark:text-gray-500 text-gray-400">Top Priority</span>
+          {/* RIGHT: Organ Info or Habit Impacts */}
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="space-y-4">
+
+            <AnimatePresence mode="wait">
+              {selectedOrgan ? (
+                <motion.div key="organ" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
+                  className="glass-card p-5" style={{ borderColor: selectedOrgan.color + '40', boxShadow: `0 0 30px ${selectedOrgan.color}10` }}>
+                  <div className="text-xs font-bold uppercase tracking-widest dark:text-gray-400 text-gray-500 mb-3">
+                    {selectedOrgan.label} Analysis
+                  </div>
+                  <div className="text-4xl font-black tabular-nums mb-1" style={{ color: selectedOrgan.color }}>
+                    {selectedOrgan.age.toFixed(1)} <span className="text-base font-normal dark:text-gray-400 text-gray-500">yrs</span>
+                  </div>
+                  <div className={`text-lg font-bold mb-3 ${selectedOrgan.delta > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                    {selectedOrgan.delta > 0 ? '+' : ''}{selectedOrgan.delta.toFixed(1)}y vs actual age
+                  </div>
+                  <p className="text-sm dark:text-gray-400 text-gray-600 leading-relaxed mb-4">
+                    {ORGAN_SHORT[selectedOrgan.id] ?? 'Biological age estimate for this organ system.'}
+                  </p>
+                  <Link href="/mirror" className="btn-primary flex items-center justify-center gap-2 text-sm py-2.5">
+                    Full Analysis <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </motion.div>
+              ) : (
+                <motion.div key="default" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="glass-card p-5">
+                  <div className="text-xs font-bold uppercase tracking-widest dark:text-gray-400 text-gray-500 mb-3">Organ Ages Overview</div>
+                  <div className="space-y-2.5">
+                    {bioAge.organAges.map((o, i) => {
+                      const sc = o.delta > 3 ? '#ef4444' : o.delta > 0 ? '#f97316' : '#10b981';
+                      return (
+                        <motion.div key={o.organ} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.07 }} className="flex items-center gap-3">
+                          <div className="flex-1">
+                            <div className="flex justify-between text-xs mb-1">
+                              <span className="font-medium dark:text-gray-300 text-gray-600">{o.label}</span>
+                              <span className="font-bold tabular-nums" style={{ color: sc }}>
+                                {o.delta > 0 ? '+' : ''}{o.delta.toFixed(1)}y
+                              </span>
+                            </div>
+                            <div className="w-full dark:bg-white/6 bg-gray-200 h-1.5 rounded-full overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${Math.min(Math.abs(o.delta) * 7 + 40, 100)}%` }}
+                                transition={{ duration: 1, delay: 0.3 + i * 0.08 }}
+                                className="h-full rounded-full"
+                                style={{ backgroundColor: sc }}
+                              />
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                  <Link href="/mirror" className="mt-4 btn-secondary w-full flex items-center justify-center gap-2 text-sm py-2.5">
+                    Full Mirror Analysis <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Habit Leaderboard */}
+            <div className="glass-card p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-xs font-bold uppercase tracking-widest dark:text-gray-400 text-gray-500">Impact Ranking</div>
+                <Link href="/simulator" className="text-xs text-primary-400 font-semibold hover:text-primary-300">Simulate →</Link>
+              </div>
+              <div className="space-y-2">
+                {habitImpacts.slice(0, 3).map((impact, i) => {
+                  const medals = ['🥇', '🥈', '🥉'];
+                  return (
+                    <div key={impact.habit} className="flex items-center gap-3 py-2 border-b dark:border-white/4 border-gray-100 last:border-0">
+                      <span className="text-base">{medals[i]}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold dark:text-white text-gray-800 truncate">{impact.label}</div>
+                        <div className="text-xs dark:text-gray-500 text-gray-400">-{impact.bioAgeImpact}y · -{impact.riskReduction}% risk</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <div>
-              <h3 className="text-xl font-bold dark:text-white text-gray-800 leading-tight mb-2">
-                 {topImpact ? topImpact.label : 'Maintain Current Routine'}
-              </h3>
-              <p className="text-sm dark:text-gray-400 text-gray-500 line-clamp-2">
-                 {topImpact ? `Targeting this habit first will yield a massive ${topImpact.riskReduction}% risk reduction and dock ${topImpact.bioAgeImpact} years off your biological age.` : 'Your vitals are stable. Keep logging daily to track trends.'}
-              </p>
-            </div>
-            <Link href="/coach" className="mt-6 text-sm text-orange-400 font-medium flex items-center gap-1 group-hover:gap-2 transition-all">Get AI Plan <ArrowRight className="w-4 h-4" /></Link>
           </motion.div>
-          
         </div>
-
-        {/* Action Highlights Row */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-           
-           {/* Timeline Insight */}
-           <div className="glass-card p-6 md:p-8 flex flex-col md:flex-row gap-6 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl" />
-              <div className="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center shrink-0">
-                 <TrendingUp className="w-8 h-8 text-blue-500" />
-              </div>
-              <div>
-                 <h3 className="text-xl font-bold dark:text-white text-gray-800 mb-2">Predictive Timeline</h3>
-                 <p className="dark:text-gray-400 text-gray-600 text-sm mb-4 leading-relaxed">
-                   Your 15-year prognosis indicates your highest isolated risk is <strong>{primaryRisk.condition}</strong> ({primaryRisk.tenYearRisk.toFixed(1)}%). See exact trajectory milestones.
-                 </p>
-                 <Link href="/timeline" className="text-sm font-semibold text-blue-500 hover:text-blue-400">View Future Prognosis →</Link>
-              </div>
-           </div>
-
-           {/* Daily Tracker Intro */}
-           <div className="glass-card p-6 md:p-8 flex flex-col md:flex-row gap-6 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-3xl" />
-              <div className="w-16 h-16 rounded-2xl bg-purple-500/10 flex items-center justify-center shrink-0">
-                 <Dumbbell className="w-8 h-8 text-purple-500" />
-              </div>
-              <div>
-                 <h3 className="text-xl font-bold dark:text-white text-gray-800 mb-2">Daily Calibration</h3>
-                 <p className="dark:text-gray-400 text-gray-600 text-sm mb-4 leading-relaxed">
-                   Track your sleep, mood, and daily choices. Consistent logging allows the AI engine to refine its predictions with high confidence accuracy.
-                 </p>
-                 <Link href="/tracker" className="text-sm font-semibold text-purple-500 hover:text-purple-400">Log Today's Data →</Link>
-              </div>
-           </div>
-
-        </motion.div>
       </div>
     </AppLayout>
   );

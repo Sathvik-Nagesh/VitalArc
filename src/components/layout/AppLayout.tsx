@@ -10,28 +10,31 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <div className="flex min-h-screen bg-grid-pattern overflow-hidden relative">
+    <div className="flex min-h-screen bg-grid-pattern overflow-x-hidden relative">
       <BackgroundPaths />
       <Sidebar />
-      <main className="flex-1 ml-[72px] lg:ml-[240px] p-4 lg:p-8 overflow-hidden">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={pathname}
-            initial={{ opacity: 0, y: 10, filter: 'blur(4px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: -10, filter: 'blur(4px)' }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="w-full flex-1 flex flex-col"
-          >
-            {children}
-          </motion.div>
-        </AnimatePresence>
+      <main className="flex-1 ml-[72px] lg:ml-[240px] min-h-screen flex flex-col">
+        <div className="flex-1 p-4 lg:p-8">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0, y: 12, filter: 'blur(6px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -8, filter: 'blur(4px)' }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="w-full"
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
+        </div>
 
         {/* Subtle Disclaimer Footer */}
-        <div className="mt-12 text-[10px] md:text-xs text-center text-gray-400 dark:text-gray-600 max-w-4xl mx-auto pb-4 opacity-60 hover:opacity-100 transition-opacity">
+        <div className="text-[10px] text-center dark:text-gray-700 text-gray-400 px-8 pb-4 leading-relaxed hover:opacity-60 opacity-40 transition-opacity">
           ⚠️ {DISCLAIMER_TEXT}
         </div>
       </main>
     </div>
   );
 }
+
