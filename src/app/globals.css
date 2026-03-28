@@ -1,26 +1,325 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-primary-50: #edfcf7;
+  --color-primary-100: #d3f8ea;
+  --color-primary-200: #aaf0d9;
+  --color-primary-300: #73e2c2;
+  --color-primary-400: #3acda7;
+  --color-primary-500: #00d4aa;
+  --color-primary-600: #00a882;
+  --color-primary-700: #00897B;
+  --color-primary-800: #006b5f;
+  --color-primary-900: #00584e;
+  --color-primary-950: #00332d;
+  --color-accent-500: #0047AB;
+  --color-accent-600: #003d94;
+  --color-surface-dark: #0a0e1a;
+  --color-surface-dark-2: #111827;
+  --color-surface-dark-3: #1a2332;
+  --color-surface-dark-4: #243044;
+  --color-surface-light: #f8fafc;
+  --color-surface-light-2: #f1f5f9;
+  --color-surface-light-3: #e2e8f0;
+  --color-surface-light-4: #cbd5e1;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ======== Base Styles ======== */
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode defaults */
+.dark body,
+.dark {
+  background-color: var(--color-surface-dark);
+  color: #e2e8f0;
+}
+
+.light body,
+.light {
+  background-color: #ffffff;
+  color: #1e293b;
+}
+
+/* ======== Glassmorphism ======== */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.light .glass {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  transition: all 0.3s ease;
+}
+
+.light .glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.glass-card:hover {
+  border-color: rgba(0, 212, 170, 0.3);
+  box-shadow: 0 0 20px rgba(0, 212, 170, 0.1);
+  transform: translateY(-2px);
+}
+
+.light .glass-card:hover {
+  border-color: rgba(0, 137, 123, 0.3);
+  box-shadow: 0 8px 30px rgba(0, 137, 123, 0.1);
+}
+
+/* ======== Custom Scrollbar ======== */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+}
+
+/* ======== Gradient Text ======== */
+.gradient-text {
+  background: linear-gradient(135deg, #00d4aa 0%, #0047AB 50%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.light .gradient-text {
+  background: linear-gradient(135deg, #00897B 0%, #0047AB 50%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ======== Animations ======== */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 15px rgba(0, 212, 170, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(0, 212, 170, 0.6); }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes orbit {
+  from { transform: rotate(0deg) translateX(120px) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(120px) rotate(-360deg); }
+}
+
+.animate-float { animation: float 6s ease-in-out infinite; }
+.animate-pulse-glow { animation: pulseGlow 2s ease-in-out infinite; }
+.animate-slide-up { animation: slideUp 0.6s ease-out forwards; }
+.animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+
+/* ======== Score Ring ======== */
+.score-ring {
+  transition: stroke-dashoffset 1.5s ease-in-out;
+}
+
+/* ======== Button Styles ======== */
+.btn-primary {
+  background: linear-gradient(135deg, #00d4aa 0%, #00897B 100%);
+  color: white;
+  padding: 0.75rem 2rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px rgba(0, 212, 170, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid rgba(0, 212, 170, 0.3);
+  color: #00d4aa;
+  padding: 0.75rem 2rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.light .btn-secondary {
+  border-color: rgba(0, 137, 123, 0.3);
+  color: #00897B;
+}
+
+.btn-secondary:hover {
+  background: rgba(0, 212, 170, 0.1);
+  border-color: rgba(0, 212, 170, 0.5);
+}
+
+/* ======== Slider Styles ======== */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.dark input[type="range"] {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.light input[type="range"] {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00d4aa, #00897B);
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 212, 170, 0.4);
+  transition: all 0.2s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 20px rgba(0, 212, 170, 0.6);
+}
+
+/* ======== Background Patterns ======== */
+.bg-grid-pattern {
+  background-image:
+    linear-gradient(rgba(0, 212, 170, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 170, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.light .bg-grid-pattern {
+  background-image:
+    linear-gradient(rgba(0, 137, 123, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 137, 123, 0.05) 1px, transparent 1px);
+}
+
+/* ======== Page transitions ======== */
+.page-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+/* ======== Tooltip ======== */
+.tooltip {
+  position: relative;
+}
+
+.tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.dark .tooltip::after {
+  background: #1a2332;
+  color: #e2e8f0;
+}
+
+.light .tooltip::after {
+  background: white;
+  color: #1e293b;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.tooltip:hover::after {
+  opacity: 1;
+}
+
+/* ======== Medal badges ======== */
+.medal-gold { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+.medal-silver { background: linear-gradient(135deg, #d1d5db, #9ca3af); }
+.medal-bronze { background: linear-gradient(135deg, #d97706, #92400e); }
+
+/* ======== Streak flame ======== */
+@keyframes flicker {
+  0%, 100% { transform: scaleY(1); }
+  25% { transform: scaleY(1.1) scaleX(0.95); }
+  50% { transform: scaleY(0.95) scaleX(1.05); }
+  75% { transform: scaleY(1.05); }
+}
+
+.flame-animation {
+  animation: flicker 0.5s ease-in-out infinite;
 }
