@@ -11,21 +11,24 @@ import { useHealthStore } from '@/store/useHealthStore';
 import { useEffect } from 'react';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { fetchProfileFromCloud } from '@/lib/sync';
+import { fetchProfileFromCloud, fetchCoachOutputFromCloud } from '@/lib/sync';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { profile, computeAll, setUser, setProfile } = useHealthStore();
+  const { profile, computeAll, setUser, setProfile, setCoachOutput } = useHealthStore();
 
   useEffect(() => {
     // Listen to Firebase Auth state
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
-        const cloudProfile = await fetchProfileFromCloud(firebaseUser.uid);
-        if (cloudProfile) {
-          setProfile(cloudProfile);
-        }
+        const [cloudProfile, cloudCoach] = await Promise.all([
+          fetchProfileFromCloud(firebaseUser.uid),
+          fetchCoachOutputFromCloud(firebaseUser.uid)
+        ]);
+        if (cloudProfile) setProfile(cloudProfile);
+        // set directly to avoid triggering the sync loop
+        if (cloudCoach) useHealthStore.setState({ coachOutput: cloudCoach });
       }
     });
     return () => unsubscribe();

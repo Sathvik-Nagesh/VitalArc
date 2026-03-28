@@ -13,7 +13,7 @@ import { calculateBiologicalAge } from '@/engines/bioAgeEngine';
 import { calculateHealthScore } from '@/engines/healthScoreEngine';
 import { calculateRisks } from '@/engines/riskEngine';
 import { rankHabitImpacts, runSimulation } from '@/engines/simulationEngine';
-import { syncProfileToCloud } from '@/lib/sync';
+import { syncProfileToCloud, syncCoachOutputToCloud } from '@/lib/sync';
 
 interface HealthState {
   // User data
@@ -133,7 +133,11 @@ export const useHealthStore = create<HealthState>()(
         });
       },
 
-      setCoachOutput: (output) => set({ coachOutput: output }),
+      setCoachOutput: (output) => {
+        set({ coachOutput: output });
+        const { user } = get();
+        if (user) syncCoachOutputToCloud(user.uid, output);
+      },
 
       addDailyLog: (log) => {
         const { dailyLogs } = get();
@@ -168,6 +172,7 @@ export const useHealthStore = create<HealthState>()(
         theme: state.theme,
         geminiApiKey: state.geminiApiKey,
         hasCompletedOnboarding: state.hasCompletedOnboarding,
+        coachOutput: state.coachOutput,
       }),
     }
   )
