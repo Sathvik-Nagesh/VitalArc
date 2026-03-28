@@ -59,9 +59,10 @@ export default function HealthRadar({ data }: { data: RadarData[] }) {
 
         {/* Data Shape */}
         <motion.polygon
+          key={JSON.stringify(data)}
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
           points={points.map(p => `${p.x + 30},${p.y + 20}`).join(' ')}
           fill="rgba(0, 212, 170, 0.2)"
           stroke="#00d4aa"

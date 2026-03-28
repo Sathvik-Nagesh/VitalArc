@@ -123,7 +123,7 @@ export default function LandingPage() {
 
           {/* CTA Group */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-24">
-            {hasCompletedOnboarding ? (
+            {user ? (
               <button
                 onClick={() => router.push('/dashboard')}
                 className="btn-primary text-xl px-12 py-5 flex items-center gap-4 group shadow-3xl shadow-primary-500/30 ring-2 ring-white/20"
@@ -133,7 +133,7 @@ export default function LandingPage() {
             ) : (
               <>
                 <button
-                  onClick={() => router.push(user ? '/collector' : '/auth')}
+                  onClick={() => router.push('/auth')}
                   className="btn-primary text-xl px-12 py-5 flex items-center gap-4 group shadow-3xl shadow-primary-500/30 ring-2 ring-white/20"
                 >
                   Start Scanning <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />

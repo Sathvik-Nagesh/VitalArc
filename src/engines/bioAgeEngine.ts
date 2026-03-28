@@ -77,7 +77,7 @@ function calculateFactorScores(profile: UserProfile): Record<string, number> {
  */
 function scoreToDelta(compositeScore: number): number {
   // Non-linear mapping: good habits are disproportionately protective
-  const linearDelta = -19 * compositeScore + 12; // [0→+12, 1→-7]
+  const linearDelta = -25 * compositeScore + 16; // [0→+16, 1→-9]
   // Apply sigmoid smoothing — extreme scores are slightly moderated
   const smoothed = linearDelta * (0.85 + 0.15 * Math.cos(compositeScore * Math.PI));
   return Math.round(smoothed * 10) / 10;
