@@ -53,42 +53,42 @@ body {
 
 /* ======== Glassmorphism ======== */
 .glass {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .light .glass {
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.07);
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 1rem;
-  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.025);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 1.25rem;
+  transition: border-color 0.35s ease, box-shadow 0.35s ease, transform 0.25s ease;
 }
 
 .light .glass-card {
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
 }
 
 .glass-card:hover {
-  border-color: rgba(0, 212, 170, 0.3);
-  box-shadow: 0 0 20px rgba(0, 212, 170, 0.1);
-  transform: translateY(-2px);
+  border-color: rgba(0, 212, 170, 0.35);
+  box-shadow: 0 0 0 1px rgba(0, 212, 170, 0.12), 0 8px 40px rgba(0, 212, 170, 0.12);
+  transform: translateY(-3px);
 }
 
 .light .glass-card:hover {
-  border-color: rgba(0, 137, 123, 0.3);
-  box-shadow: 0 8px 30px rgba(0, 137, 123, 0.1);
+  border-color: rgba(0, 137, 123, 0.25);
+  box-shadow: 0 8px 32px rgba(0, 137, 123, 0.1);
 }
 
 /* ======== Custom Scrollbar ======== */
@@ -171,43 +171,63 @@ body {
   background: linear-gradient(135deg, #00d4aa 0%, #00897B 100%);
   color: white;
   padding: 0.75rem 2rem;
-  border-radius: 0.75rem;
-  font-weight: 600;
-  transition: all 0.3s ease;
+  border-radius: 0.875rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   border: none;
   cursor: pointer;
   position: relative;
   overflow: hidden;
 }
 
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.btn-primary:hover::before {
+  opacity: 1;
+}
+
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 0 30px rgba(0, 212, 170, 0.4);
+  transform: translateY(-3px);
+  box-shadow: 0 0 0 1px rgba(0, 212, 170, 0.3), 0 8px 40px rgba(0, 212, 170, 0.45);
 }
 
 .btn-primary:active {
   transform: translateY(0);
+  box-shadow: none;
 }
 
 .btn-secondary {
-  background: transparent;
+  background: rgba(0, 212, 170, 0.06);
   border: 1px solid rgba(0, 212, 170, 0.3);
   color: #00d4aa;
   padding: 0.75rem 2rem;
-  border-radius: 0.75rem;
+  border-radius: 0.875rem;
   font-weight: 600;
   transition: all 0.3s ease;
   cursor: pointer;
+  backdrop-filter: blur(8px);
 }
 
 .light .btn-secondary {
+  background: rgba(0, 137, 123, 0.06);
   border-color: rgba(0, 137, 123, 0.3);
   color: #00897B;
 }
 
 .btn-secondary:hover {
-  background: rgba(0, 212, 170, 0.1);
-  border-color: rgba(0, 212, 170, 0.5);
+  background: rgba(0, 212, 170, 0.14);
+  border-color: rgba(0, 212, 170, 0.55);
+  box-shadow: 0 0 24px rgba(0, 212, 170, 0.15);
+  transform: translateY(-2px);
 }
 
 /* ======== Slider Styles ======== */

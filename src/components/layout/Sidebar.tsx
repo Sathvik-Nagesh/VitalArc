@@ -68,11 +68,11 @@ export default function Sidebar() {
 
       {/* Bottom Actions */}
       <div className="px-2 py-4 border-t border-white/5 space-y-2">
-        {/* Privacy */}
-        <div className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-500 dark:text-gray-500">
+        {/* Privacy & Terms */}
+        <Link href="/privacy" className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-500 dark:text-gray-500 hover:bg-white/5 hover:text-gray-400 transition-all text-xs">
           <Shield className="w-4 h-4 flex-shrink-0" />
-          <span className="hidden lg:block text-xs">Data stays on device</span>
-        </div>
+          <span className="hidden lg:block text-xs">Privacy & Terms</span>
+        </Link>
 
         {/* Theme Toggle */}
         <button

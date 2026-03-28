@@ -16,10 +16,8 @@ export default function LandingPage() {
 
   useEffect(() => {
     setMounted(true);
-    if (hasCompletedOnboarding) {
-      router.push('/dashboard');
-    }
-  }, [hasCompletedOnboarding, router]);
+  }, []);
+
 
   const handleLoadProfile = (key: string) => {
     const profile = sampleProfiles[key];
@@ -114,23 +112,46 @@ export default function LandingPage() {
             transition={{ delay: 0.8, duration: 0.6 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6"
           >
-            <button
-              onClick={() => router.push('/collector')}
-              className="btn-primary text-lg px-8 py-4 flex items-center gap-2 group"
-              id="start-journey-btn"
-            >
-              Start Your Health Journey
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </button>
+            {hasCompletedOnboarding ? (
+              <>
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="btn-primary text-lg px-8 py-4 flex items-center gap-2 group shadow-lg shadow-primary-500/30"
+                  id="go-dashboard-btn"
+                >
+                  <Activity className="w-5 h-5" />
+                  Go to Dashboard
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+                <button
+                  onClick={() => router.push('/collector')}
+                  className="btn-secondary text-lg px-8 py-4 flex items-center gap-2"
+                  id="restart-journey-btn"
+                >
+                  Restart Health Setup
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => router.push('/collector')}
+                  className="btn-primary text-lg px-8 py-4 flex items-center gap-2 group shadow-lg shadow-primary-500/30"
+                  id="start-journey-btn"
+                >
+                  Start Your Health Journey
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
 
-            <button
-              onClick={() => setShowProfiles(!showProfiles)}
-              className="btn-secondary text-lg px-8 py-4 flex items-center gap-2"
-              id="demo-profiles-btn"
-            >
-              Try Demo Profile
-              <ChevronDown className={`w-5 h-5 transition-transform ${showProfiles ? 'rotate-180' : ''}`} />
-            </button>
+                <button
+                  onClick={() => setShowProfiles(!showProfiles)}
+                  className="btn-secondary text-lg px-8 py-4 flex items-center gap-2"
+                  id="demo-profiles-btn"
+                >
+                  Try Demo Profile
+                  <ChevronDown className={`w-5 h-5 transition-transform ${showProfiles ? 'rotate-180' : ''}`} />
+                </button>
+              </>
+            )}
           </motion.div>
 
           {/* Demo Profiles */}
