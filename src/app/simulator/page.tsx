@@ -61,7 +61,26 @@ export default function SimulatorPage() {
             <h1 className="text-3xl font-bold dark:text-white text-gray-800 flex items-center gap-2"><SlidersHorizontal className="w-8 h-8 text-cyan-400" /> Habit Simulator</h1>
             <p className="dark:text-gray-400 text-gray-500 mt-1">See how lifestyle changes affect your health in real-time</p>
           </div>
-          <button onClick={handleReset} className="btn-secondary flex items-center gap-2 text-sm"><RotateCcw className="w-4 h-4" /> Reset</button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                // Set evidence-based optimal values
+                const optimal: SimulatorValues = {
+                  sleepHours: 8,
+                  exerciseDaysPerWeek: 5,
+                  dietQuality: 9,
+                  stressLevel: 2,
+                  smokingStatus: 'never',
+                };
+                setLocalValues(optimal);
+                setSimulatorValues(optimal);
+              }}
+              className="btn-primary flex items-center gap-2 text-sm"
+            >
+              <Sparkles className="w-4 h-4" /> Optimize for Me
+            </button>
+            <button onClick={handleReset} className="btn-secondary flex items-center gap-2 text-sm"><RotateCcw className="w-4 h-4" /> Reset</button>
+          </div>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

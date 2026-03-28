@@ -42,7 +42,9 @@ export default function PredictorPage() {
                   </div>
                   <div className="flex items-center gap-1.5">
                     <div className={`w-2 h-2 rounded-full ${confidenceColors[risk.confidence]}`} />
-                    <span className="text-xs dark:text-gray-500 text-gray-400">{risk.confidence}</span>
+                    <span className="text-xs dark:text-gray-500 text-gray-400">
+                      Data: {risk.confidence === 'high' ? 'Complete' : risk.confidence === 'medium' ? 'Partial' : 'Basic'}
+                    </span>
                   </div>
                 </div>
 

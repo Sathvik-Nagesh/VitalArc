@@ -41,6 +41,7 @@ export interface UserProfile {
 
   // Meta
   name?: string;
+  healthConditions?: string[]; // e.g. ['knee pain', 'type 2 diabetes', 'lower back injury']
 }
 
 export interface OrganAge {
@@ -132,6 +133,8 @@ export interface Recommendation {
   isMostImportant: boolean;
   icon: string;
   category: string;
+  citation?: string;       // e.g. "AHA Guidelines 2023"
+  citationUrl?: string;    // e.g. "https://heart.org/..."
 }
 
 export interface CoachOutput {

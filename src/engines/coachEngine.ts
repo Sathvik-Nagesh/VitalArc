@@ -1,106 +1,195 @@
 // ============================================================
-// VitalArc — AI Coach Engine (Gemini-powered)
+// VitalArc — AI Coach Engine v3
+// Routes all Gemini calls through /api/ai (server-side key)
+// Privacy: Only anonymized data sent to AI
 // ============================================================
 
-import { UserProfile, BiologicalAgeResult, RiskPrediction, HealthScore, Recommendation, CoachOutput, HabitChange } from '@/lib/types';
+import { UserProfile, BiologicalAgeResult, RiskPrediction, HealthScore, CoachOutput, HabitChange, Recommendation } from '@/lib/types';
+
+// In-memory rate limit (client side backup)
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const LIMIT = 10;
+const WINDOW = 60 * 60 * 1000;
+
+function checkClientRateLimit(id: string): { allowed: boolean; remaining: number } {
+  const now = Date.now();
+  const entry = rateLimitMap.get(id);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(id, { count: 1, resetAt: now + WINDOW });
+    return { allowed: true, remaining: LIMIT - 1 };
+  }
+  if (entry.count >= LIMIT) return { allowed: false, remaining: 0 };
+  entry.count++;
+  return { allowed: true, remaining: LIMIT - entry.count };
+}
+
+function sanitize(s: unknown): string {
+  if (typeof s !== 'string') return '';
+  return s.replace(/[<>{}"'`\\;()]/g, '').trim().slice(0, 200);
+}
+
+function clampNum(v: unknown, min: number, max: number): number {
+  const n = Number(v);
+  return isNaN(n) ? min : Math.max(min, Math.min(max, Math.round(n)));
+}
 
 /**
- * Rule-based recommendation fallback when Gemini API is unavailable.
+ * Build privacy-safe prompt — no PII, only anonymized brackets
  */
-function generateRuleBasedRecommendations(
+function buildPrompt(
   profile: UserProfile,
   bioAge: BiologicalAgeResult,
+  risks: RiskPrediction[],
+  healthScore: HealthScore,
+  impacts: HabitChange[]
+): string {
+  const age = clampNum(profile.age, 10, 120);
+  const ageBracket = age < 30 ? '18-29' : age < 40 ? '30-39' : age < 50 ? '40-49' : age < 60 ? '50-59' : '60+';
+  const bmi = parseFloat((profile.weight / ((profile.height / 100) ** 2)).toFixed(1));
+  const bmiCategory = bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Healthy' : bmi < 30 ? 'Overweight' : 'Obese';
+  const gender = ['male', 'female', 'other'].includes(profile.gender) ? profile.gender : 'unspecified';
+  const sleep = clampNum(profile.sleepHours, 3, 12);
+  const exercise = clampNum(profile.exerciseDaysPerWeek, 0, 7);
+  const diet = clampNum(profile.dietQuality, 1, 10);
+  const stress = clampNum(profile.stressLevel, 1, 10);
+  const smoking = ['never', 'former', 'current'].includes(profile.smokingStatus) ? profile.smokingStatus : 'unspecified';
+  const alcohol = clampNum(profile.alcoholDrinksPerWeek, 0, 50);
+  // Injuries / conditions
+  const conditions = profile.healthConditions?.length
+    ? profile.healthConditions.join(', ')
+    : 'None reported';
+
+  const topRisk = risks.reduce((p, c) => c.tenYearRisk > p.tenYearRisk ? c : p, risks[0]);
+
+  return `You are a clinical preventive health coach AI. Generate personalized coaching recommendations.
+
+ANONYMIZED HEALTH PROFILE:
+- Age bracket: ${ageBracket}
+- Gender: ${gender}
+- BMI category: ${bmiCategory} (${bmi} kg/m²)
+- Sleep: ${sleep} hours/night
+- Exercise: ${exercise} days/week
+- Diet quality: ${diet}/10
+- Stress: ${stress}/10
+- Smoking: ${smoking}
+- Alcohol: ${alcohol} drinks/week
+- Biological age delta: ${bioAge.delta > 0 ? '+' : ''}${bioAge.delta.toFixed(1)} years
+- Health score: ${healthScore.overall}/100
+- Highest risk: ${sanitize(topRisk?.condition || 'N/A')} at ${Math.round(topRisk?.tenYearRisk || 0)}% (10-year)
+- KNOWN INJURIES / CONDITIONS: ${conditions}
+
+IMPORTANT: If the user has injuries or conditions (e.g., knee pain, sprain, back injury), you MUST adjust every recommendation to be safe and achievable for them. Never recommend high-impact exercise for injured individuals. Suggest physio-approved alternatives like swimming, seated exercise, or water aerobics.
+
+Top impact opportunities:
+${impacts.slice(0, 4).map((i, n) => `${n + 1}. ${sanitize(i.label)} → -${i.bioAgeImpact}y bio age, +${i.scoreImpact} score`).join('\n')}
+
+MEDICAL EDUCATION DISCLAIMER: These are informational insights only, not medical advice.
+
+Respond ONLY with valid JSON matching this schema exactly:
+{
+  "recommendations": [
+    {
+      "rank": 1,
+      "action": "Specific action title",
+      "rationale": "Why this matters based on their profile (2-3 sentences). Reference clinical guidelines.",
+      "estimatedImpact": "Quantified expected improvement",
+      "howToStart": "Concrete first steps today, adapted for any conditions/injuries",
+      "isMostImportant": true,
+      "icon": "🏃",
+      "category": "Category name",
+      "citation": "Source: AHA/WHO/ACSM Guidelines (year)",
+      "citationUrl": "https://specific-guideline-url.org"
+    }
+  ],
+  "futureStory": "Motivational 2-3 sentence trajectory narrative. No personal names. Mention age milestone.",
+  "mostImportantChange": "Single sentence summary of top priority"
+}
+
+Return exactly 3 recommendations. No markdown. Pure JSON only.`;
+}
+
+/**
+ * Rule-based fallback engine (works without AI)
+ */
+function ruleBasedFallback(
+  profile: UserProfile,
+  _bioAge: BiologicalAgeResult,
   risks: RiskPrediction[],
   _healthScore: HealthScore,
   impacts: HabitChange[]
 ): CoachOutput {
-  const recommendations: Recommendation[] = [];
-
-  // Use impact rankings to determine recommendations
-  const topImpacts = impacts.slice(0, 3);
+  const conditions = profile.healthConditions || [];
+  const hasInjury = conditions.some(c => /pain|sprain|injury|fracture|arthritis|surgery/i.test(c));
 
   const categoryMap: Record<string, string> = {
-    sleep: 'Sleep',
-    exercise: 'Exercise',
-    diet: 'Nutrition',
-    stress: 'Mental Wellness',
-    smoking: 'Smoking Cessation',
+    sleep: 'Sleep', exercise: 'Exercise', diet: 'Nutrition',
+    stress: 'Mental Wellness', smoking: 'Smoking Cessation', alcohol: 'Alcohol',
   };
 
-  const actionMap: Record<string, { action: string; howToStart: string }> = {
+  const actionMap: Record<string, { action: string; howToStart: string; citation: string; citationUrl: string }> = {
     sleep: {
-      action: `Increase your sleep from ${profile.sleepHours} hours to 7-8 hours per night`,
-      howToStart: 'Set a bedtime alarm 8 hours before your wake time. Eliminate screens 1 hour before bed. Keep your bedroom cool and dark.',
+      action: 'Increase sleep to 7-8 hours per night',
+      howToStart: 'Set a consistent bedtime alarm. Avoid screens 1 hour before bed. Keep the room cool (18-20°C).',
+      citation: 'National Sleep Foundation Guidelines (2023)',
+      citationUrl: 'https://www.sleepfoundation.org/how-sleep-works/how-much-sleep-do-we-really-need',
     },
-    exercise: {
-      action: `Increase physical activity from ${profile.exerciseDaysPerWeek} to 5 days per week`,
-      howToStart: 'Start with 20-minute brisk walks after dinner. Add one day per week gradually. Try a morning routine of bodyweight exercises.',
+    exercise: hasInjury ? {
+      action: 'Start with low-impact activity adapted to your condition',
+      howToStart: 'Consult your physiotherapist first. Consider swimming, water aerobics, or seated chair exercises — all joint-friendly.',
+      citation: 'ACSM Exercise Guidelines for Special Populations (2022)',
+      citationUrl: 'https://www.acsm.org/education-resources/books/guidelines-exercise-testing-prescription',
+    } : {
+      action: 'Increase physical activity to 5 days per week',
+      howToStart: 'Start with 20-min brisk walks. Build up by 10 min per week. Try morning bodyweight exercises.',
+      citation: 'WHO Physical Activity Guidelines (2020)',
+      citationUrl: 'https://www.who.int/news-room/fact-sheets/detail/physical-activity',
     },
     diet: {
-      action: `Improve your diet quality from ${profile.dietQuality}/10 to at least 8/10`,
-      howToStart: 'Add one serving of vegetables to each meal. Replace processed snacks with fruits and nuts. Cook at home at least 4 times per week.',
+      action: 'Improve diet quality to at least 8/10',
+      howToStart: 'Add one vegetable serving per meal. Replace processed snacks with fruits/nuts. Reduce sodium intake.',
+      citation: 'AHA Dietary Guidelines (2021)',
+      citationUrl: 'https://www.heart.org/en/healthy-living/healthy-eating/eat-smart/nutrition-basics',
     },
     stress: {
-      action: `Reduce your stress from ${profile.stressLevel}/10 to below 4/10`,
-      howToStart: 'Practice 10 minutes of deep breathing or meditation daily. Take short breaks every 90 minutes during work. Try journaling before bed.',
-    },
-    smoking: {
-      action: 'Quit smoking completely',
-      howToStart: 'Consult your doctor about cessation aids. Set a quit date within 2 weeks. Identify your triggers and plan alternatives.',
+      action: 'Reduce stress level to below 4/10',
+      howToStart: '10 minutes of deep breathing daily. 90-min work blocks with breaks. Progressive muscle relaxation at bedtime.',
+      citation: 'WHO Mental Health Guidelines (2022)',
+      citationUrl: 'https://www.who.int/news-room/fact-sheets/detail/mental-health-strengthening-our-response',
     },
   };
 
-  topImpacts.forEach((impact, index) => {
-    const category = categoryMap[impact.habit] || impact.habit;
-    const actions = actionMap[impact.habit] || { action: impact.label, howToStart: 'Start today with small changes.' };
-
-    const highestRisk = risks.reduce((prev, curr) => 
-      curr.tenYearRisk > prev.tenYearRisk ? curr : prev
-    );
-
-    let rationale = '';
-    if (impact.habit === 'sleep') {
-      rationale = `Your current sleep of ${profile.sleepHours} hours is below the optimal 7-9 hours. Poor sleep accelerates biological aging by disrupting cellular repair processes and increasing cortisol levels. With your ${highestRisk.condition} risk at ${highestRisk.tenYearRisk}%, improving sleep could reduce this significantly.`;
-    } else if (impact.habit === 'exercise') {
-      rationale = `At ${profile.exerciseDaysPerWeek} days of exercise per week, you're below the recommended minimum. Regular physical activity reduces cardiovascular risk by up to 30%, improves insulin sensitivity, and strengthens your musculoskeletal system. Your biological age is ${bioAge.delta > 0 ? bioAge.delta + ' years older' : Math.abs(bioAge.delta) + ' years younger'} than your actual age — exercise is one of the most powerful ways to reverse this.`;
-    } else if (impact.habit === 'diet') {
-      rationale = `Your diet quality score of ${profile.dietQuality}/10 suggests room for improvement. Nutrition directly impacts your metabolic age (currently ${bioAge.organAges.find(o => o.organ === 'metabolic')?.age || 'elevated'}) and plays a key role in diabetes and cardiovascular prevention.`;
-    } else if (impact.habit === 'stress') {
-      rationale = `Your stress level of ${profile.stressLevel}/10 is significantly elevated. Chronic stress increases cortisol, raises blood pressure, disrupts sleep, and accelerates brain aging. Your brain age is estimated at ${bioAge.organAges.find(o => o.organ === 'brain')?.age || 'elevated'}, and stress reduction could meaningfully lower it.`;
-    } else if (impact.habit === 'smoking') {
-      rationale = `Smoking is the single largest modifiable risk factor for cardiovascular disease and cancer. Quitting can reduce your cardiovascular risk by up to 50% within one year and normalize your lung function within 5-10 years.`;
-    }
-
-    recommendations.push({
-      rank: index + 1,
+  const highestRisk = risks.reduce((p, c) => c.tenYearRisk > p.tenYearRisk ? c : p, risks[0]);
+  const recs: Recommendation[] = impacts.slice(0, 3).map((impact, i) => {
+    const actions = actionMap[impact.habit] || {
+      action: impact.label,
+      howToStart: 'Start with small daily improvements.',
+      citation: 'VitalArc Clinical Engine',
+      citationUrl: 'https://vitalarc.vercel.app/about',
+    };
+    const cat = categoryMap[impact.habit] || impact.habit;
+    return {
+      rank: i + 1,
       action: actions.action,
-      rationale,
-      estimatedImpact: `Bio age reduced by ${impact.bioAgeImpact} years, health score improved by +${impact.scoreImpact} points, average risk reduced by ${impact.riskReduction}%`,
+      rationale: `Improving ${cat.toLowerCase()} could reduce your ${highestRisk?.condition || 'health'} risk. Clinical evidence shows this is among the highest-return lifestyle interventions for your profile.`,
+      estimatedImpact: `Biological age ↓ ${impact.bioAgeImpact}y, health score ↑ ${impact.scoreImpact}pts`,
       howToStart: actions.howToStart,
-      isMostImportant: index === 0,
-      icon: impact.icon,
-      category,
-    });
+      isMostImportant: i === 0,
+      icon: impact.icon || '⭐',
+      category: cat,
+      citation: actions.citation,
+      citationUrl: actions.citationUrl,
+    };
   });
 
-  // Generate future story
-  const highestRisk = risks.reduce((prev, curr) => 
-    curr.tenYearRisk > prev.tenYearRisk ? curr : prev
-  );
-  const topAction = topImpacts[0];
-
-  const futureAge = profile.age + 13;
-  const futureStory = `At age ${futureAge}, based on your current trajectory, you may face ${highestRisk.condition.toLowerCase()} with a ${highestRisk.tenYearRisk}% probability — potentially requiring daily medication and regular doctor visits. However, the data shows something powerful: by ${topAction?.label.toLowerCase() || 'improving your habits'} starting today, you could reduce your biological age by ${topAction?.bioAgeImpact || 3} years and significantly delay or even prevent this outcome. Imagine yourself at ${futureAge} — active, energetic, and free from preventable health burdens. That future is within your reach, and it starts with one change today.`;
-
   return {
-    recommendations,
-    futureStory,
-    mostImportantChange: topAction?.label || 'Improve your lifestyle habits',
+    recommendations: recs,
+    futureStory: `Based on your current health trajectory, focused improvements in ${impacts[0]?.label.toLowerCase() || 'lifestyle'} could meaningfully shift your biological age over the next 2-5 years. The clinical evidence is clear: consistent small changes compound powerfully. Your data shows real room for improvement — and that's actually great news.`,
+    mostImportantChange: recs[0]?.action || 'Improve your top lifestyle factor',
   };
 }
 
 /**
- * Try to call Gemini API for AI-powered coaching, fall back to rule-based.
+ * Main export — calls server-side /api/ai route
  */
 export async function generateCoachRecommendations(
   profile: UserProfile,
@@ -108,83 +197,40 @@ export async function generateCoachRecommendations(
   risks: RiskPrediction[],
   healthScore: HealthScore,
   impacts: HabitChange[],
-  apiKey?: string
-): Promise<CoachOutput> {
-  // If no API key, use rule-based system
-  if (!apiKey) {
-    return generateRuleBasedRecommendations(profile, bioAge, risks, healthScore, impacts);
+  _legacyApiKey?: string, // ignored — key is now server-side only
+  userId?: string
+): Promise<CoachOutput & { rateLimited?: boolean; remaining?: number; isAI?: boolean }> {
+
+  const sessionKey = userId || 'anonymous';
+  const { allowed, remaining } = checkClientRateLimit(sessionKey);
+  if (!allowed) {
+    return { ...ruleBasedFallback(profile, bioAge, risks, healthScore, impacts), rateLimited: true, remaining: 0, isAI: false };
   }
 
   try {
-    const { GoogleGenerativeAI } = await import('@google/generative-ai');
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const prompt = buildPrompt(profile, bioAge, risks, healthScore, impacts);
 
-    const prompt = `You are an expert preventive health AI coach for the VitalArc platform.
+    const res = await fetch('/api/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, userId: sessionKey, mode: 'coach' }),
+    });
 
-Given this user's health data:
-- Name: ${profile.name || 'User'}
-- Age: ${profile.age}, Gender: ${profile.gender}
-- BMI: ${(profile.weight / ((profile.height / 100) ** 2)).toFixed(1)}
-- Sleep: ${profile.sleepHours} hours/night
-- Exercise: ${profile.exerciseDaysPerWeek} days/week
-- Diet quality: ${profile.dietQuality}/10
-- Stress: ${profile.stressLevel}/10
-- Smoking: ${profile.smokingStatus}
-- Alcohol: ${profile.alcoholDrinksPerWeek} drinks/week
-
-Their biological age: ${bioAge.biologicalAge} (chronological: ${bioAge.chronologicalAge}, delta: ${bioAge.delta > 0 ? '+' : ''}${bioAge.delta} years)
-Organ ages: ${bioAge.organAges.map(o => `${o.label}: ${o.age}`).join(', ')}
-
-Health Score: ${healthScore.overall}/100
-
-Risk predictions (10-year):
-${risks.map(r => `- ${r.condition}: ${r.tenYearRisk}% (${r.severity})`).join('\n')}
-
-Top habit impacts ranked:
-${impacts.slice(0, 3).map((i, idx) => `${idx + 1}. ${i.label} → Bio age -${i.bioAgeImpact}y, score +${i.scoreImpact}, risk -${i.riskReduction}%`).join('\n')}
-
-Generate EXACTLY 3 recommendations in this JSON format:
-{
-  "recommendations": [
-    {
-      "rank": 1,
-      "action": "specific action",
-      "rationale": "why this matters for THIS user (2-3 sentences, use their specific numbers)",
-      "estimatedImpact": "quantified impact",
-      "howToStart": "concrete steps to start today",
-      "isMostImportant": true/false,
-      "icon": "emoji",
-      "category": "category name"
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error('[Coach API error]', res.status, err);
+      // If 503 = no API key, fall back silently
+      return { ...ruleBasedFallback(profile, bioAge, risks, healthScore, impacts), remaining, isAI: false };
     }
-  ],
-  "futureStory": "A short, personal, motivational narrative (3-4 sentences) about this user's health future. Include specific age milestones, potential risks, and how today's changes can transform their trajectory. Make it emotional and clear.",
-  "mostImportantChange": "the single most important change"
-}
 
-IMPORTANT: 
-- Make recommendations personal to THIS user's specific numbers
-- First recommendation should be isMostImportant: true
-- Future story must mention specific ages and conditions relevant to this user
-- Keep the tone motivational, not scary
-- This is NOT medical advice, it's educational insights
-
-Return ONLY valid JSON, no markdown formatting.`;
-
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
-    
-    // Try to parse JSON from the response
+    const { text } = await res.json();
     const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]) as CoachOutput;
-      return parsed;
-    }
+    if (!jsonMatch) throw new Error('No JSON in response');
 
-    // Fallback if parsing fails
-    return generateRuleBasedRecommendations(profile, bioAge, risks, healthScore, impacts);
-  } catch (error) {
-    console.error('Gemini API error, falling back to rule-based:', error);
-    return generateRuleBasedRecommendations(profile, bioAge, risks, healthScore, impacts);
+    const parsed = JSON.parse(jsonMatch[0]) as CoachOutput;
+    return { ...parsed, remaining, isAI: true };
+  } catch (err) {
+    console.error('[Coach fallback to rule-based]', err);
+    return { ...ruleBasedFallback(profile, bioAge, risks, healthScore, impacts), remaining, isAI: false };
   }
 }

@@ -2,6 +2,7 @@
 
 import Sidebar from '@/components/layout/Sidebar';
 import CookieConsent from '@/components/layout/CookieConsent';
+import HealthChatbox from '@/components/chat/HealthChatbox';
 import { DISCLAIMER_TEXT } from '@/lib/constants';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
@@ -57,12 +58,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </AnimatePresence>
         </div>
 
-        {/* Subtle Disclaimer Footer */}
-        <div className="text-[10px] text-center dark:text-gray-700 text-gray-400 px-8 pb-4 leading-relaxed hover:opacity-60 opacity-40 transition-opacity">
+        {/* Disclaimer Footer — Bolder & Visible */}
+        <div className="text-xs text-center dark:text-amber-400/70 text-amber-700 bg-amber-500/5 border-t dark:border-amber-500/10 border-amber-200 px-6 pb-4 pt-3 leading-relaxed font-medium">
           ⚠️ {DISCLAIMER_TEXT}
         </div>
       </main>
       <CookieConsent />
+      <HealthChatbox />
     </div>
   );
 }

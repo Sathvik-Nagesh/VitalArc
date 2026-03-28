@@ -16,6 +16,21 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const getErrorMessage = (code: string): string => {
+    const errorMap: Record<string, string> = {
+      'auth/configuration-not-found': '🔧 Firebase Auth is not enabled. Go to Firebase Console → Authentication → Sign-in method → Enable Email/Password.',
+      'auth/invalid-credential': 'Invalid email or password. Please try again.',
+      'auth/user-not-found': 'No account found with this email. Please sign up.',
+      'auth/wrong-password': 'Incorrect password. Please try again.',
+      'auth/email-already-in-use': 'This email is already registered. Please sign in instead.',
+      'auth/weak-password': 'Password must be at least 6 characters.',
+      'auth/invalid-email': 'Please enter a valid email address.',
+      'auth/too-many-requests': 'Too many attempts. Please wait a few minutes and try again.',
+      'auth/network-request-failed': 'Network error. Check your internet connection.',
+    };
+    return errorMap[code] || `Authentication error: ${code}`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -27,10 +42,11 @@ export default function AuthPage() {
       } else {
         await createUserWithEmailAndPassword(auth, email, password);
       }
-      // On success, redirect to dashboard. The AppLayout auth listener handles actual state.
-      router.push('/dashboard');
+      router.push('/collector');
     } catch (err: any) {
-      setError(err.message || 'Authentication failed. Please check your credentials.');
+      const code = err?.code || '';
+      setError(getErrorMessage(code));
+      console.error('[Auth Error]', code, err?.message);
     } finally {
       setLoading(false);
     }

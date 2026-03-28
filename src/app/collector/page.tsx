@@ -299,18 +299,79 @@ export default function CollectorPage() {
               </div>
             )}
 
-            {/* Step 3: Mental Health */}
+            {/* Step 3: Mental Health + Conditions */}
             {step === 3 && (
-              <div>
-                <label className={labelClass}>Stress Level: {formData.stressLevel}/10</label>
-                <input type="range" min={1} max={10} value={formData.stressLevel} onChange={e => update('stressLevel', parseInt(e.target.value))} />
-                <div className="flex justify-between text-xs dark:text-gray-500 text-gray-400 mt-1"><span>😌 Relaxed</span><span>😰 Extremely Stressed</span></div>
-                <div className="mt-6 grid grid-cols-5 gap-2">
-                  {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
-                    <button key={n} onClick={() => update('stressLevel', n)} className={`py-3 rounded-xl text-sm font-semibold transition-all ${formData.stressLevel === n ? 'bg-primary-500/20 text-primary-400 ring-1 ring-primary-500/30' : 'dark:bg-white/5 bg-gray-100 dark:text-gray-400 text-gray-500 hover:bg-white/10'}`}>
-                      {n}
-                    </button>
-                  ))}
+              <div className="space-y-6">
+                <div>
+                  <label className={labelClass}>Stress Level: {formData.stressLevel}/10</label>
+                  <input type="range" min={1} max={10} value={formData.stressLevel} onChange={e => update('stressLevel', parseInt(e.target.value))} />
+                  <div className="flex justify-between text-xs dark:text-gray-500 text-gray-400 mt-1"><span>😌 Relaxed</span><span>😰 Extremely Stressed</span></div>
+                  <div className="mt-6 grid grid-cols-5 gap-2">
+                    {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
+                      <button key={n} onClick={() => update('stressLevel', n)} className={`py-3 rounded-xl text-sm font-semibold transition-all ${formData.stressLevel === n ? 'bg-primary-500/20 text-primary-400 ring-1 ring-primary-500/30' : 'dark:bg-white/5 bg-gray-100 dark:text-gray-400 text-gray-500 hover:bg-white/10'}`}>
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Health Conditions & Injuries */}
+                <div className="pt-4 border-t dark:border-white/10 border-gray-200">
+                  <label className="block text-sm font-bold dark:text-white text-gray-800 mb-1">🩹 Health Conditions & Injuries</label>
+                  <p className="text-xs dark:text-gray-400 text-gray-500 mb-3">Select any that apply — the AI Coach will adapt all recommendations to be safe for you</p>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {[
+                      'Knee pain/injury', 'Lower back pain', 'Shoulder injury', 'Sprain/strain',
+                      'Arthritis', 'Post-surgery', 'Chronic fatigue', 'Diabetes',
+                      'Hypertension', 'Asthma', 'Heart condition', 'Sciatica'
+                    ].map(condition => {
+                      const selected = (formData.healthConditions || []).includes(condition);
+                      return (
+                        <button
+                          key={condition}
+                          onClick={() => {
+                            const current = formData.healthConditions || [];
+                            update('healthConditions', selected
+                              ? current.filter(c => c !== condition)
+                              : [...current, condition]
+                            );
+                          }}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all border ${
+                            selected
+                              ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
+                              : 'dark:bg-white/5 bg-gray-100 dark:text-gray-400 text-gray-500 dark:border-white/10 border-gray-200 hover:border-orange-500/30'
+                          }`}
+                        >
+                          {selected ? '✓ ' : ''}{condition}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Or type a custom condition (e.g. 'herniated disc')..."
+                      className={inputClass + ' text-sm'}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                          const current = formData.healthConditions || [];
+                          const val = e.currentTarget.value.trim();
+                          if (!current.includes(val)) update('healthConditions', [...current, val]);
+                          e.currentTarget.value = '';
+                        }
+                      }}
+                    />
+                  </div>
+                  {(formData.healthConditions || []).length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {(formData.healthConditions || []).map(c => (
+                        <span key={c} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-orange-500/10 text-orange-400 text-xs">
+                          {c}
+                          <button onClick={() => update('healthConditions', (formData.healthConditions || []).filter(x => x !== c))} className="ml-1 hover:text-red-400">×</button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
